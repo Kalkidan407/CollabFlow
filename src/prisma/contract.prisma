@@ -1,0 +1,64 @@
+// use prisma-8
+model Room {
+  id                   String                     @id @default(uuid())
+  code                 String                     @unique
+  status               String                     @default("WAITING")
+  maxPlayers           Int                        @default(10)
+  questionCount        Int                        @default(10)
+  currentQuestionIndex Int                        @default(0)
+  createdAt            TimestamptzString          @default(now())
+  updatedAt            temporal.updatedAtString()
+
+  players              Player[]
+  gameQuestions        GameQuestion[]
+  votes                Vote[]
+}
+
+model Player {
+  id            String            @id @default(uuid())
+  roomId        String
+  name          String
+  isHost        Boolean           @default(false)
+  joinedAt      TimestamptzString @default(now())
+
+  room          Room              @relation(fields:[roomId], references:[id])
+  votes         Vote[]            @relation("Voter")
+  votesReceived Vote[]            @relation("VotedFor")
+}
+
+model Question {
+  id            String            @id @default(uuid())
+  text          String
+  category      String
+  createdAt     TimestamptzString @default(now())
+
+  gameQuestions GameQuestion[]
+}
+
+model GameQuestion {
+  id            String   @id @default(uuid())
+  roomId        String
+  questionId    String
+  questionOrder Int
+
+  room          Room     @relation(fields:[roomId], references:[id])
+  question      Question @relation(fields:[questionId], references:[id])
+
+  votes         Vote[]
+}
+
+model Vote {
+  id             String            @id @default(uuid())
+  roomId         String
+  gameQuestionId String
+  voterId        String
+  votedForId     String
+  createdAt      TimestamptzString @default(now())
+
+  room           Room              @relation(fields:[roomId], references:[id])
+  gameQuestion   GameQuestion      @relation(fields:[gameQuestionId], references:[id])
+  voter          Player            @relation("Voter", fields:[voterId], references:[id])
+  votedFor       Player            @relation("VotedFor", fields:[votedForId], references:[id])
+
+  @@unique([gameQuestionId, voterId])
+}
