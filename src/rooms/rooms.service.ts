@@ -45,6 +45,7 @@ export class RoomsService {
   async createRoom(hostName: string): Promise<RoomRecord> {
     const db = this.prisma.getClient();
     const code = await this.generateUniqueRoomCode(db);
+    const safeHostName = this.normalizeDisplayName(hostName, 'Host');
 
     const room = await db.orm.public.Room.create({
       code,
@@ -56,7 +57,7 @@ export class RoomsService {
 
     const host = await db.orm.public.Player.create({
       roomId: room.id,
-      name: hostName,
+      name: safeHostName,
       isHost: true,
     });
 
@@ -77,17 +78,28 @@ export class RoomsService {
       throw new Error('Room is full.');
     }
 
-    const existing = players.find((player) => player.name === playerName);
+    const safePlayerName = this.normalizeDisplayName(playerName, 'Guest');
+    const existing = players.find((player) => player.name === safePlayerName);
     if (!existing) {
       await db.orm.public.Player.create({
         roomId: room.id,
-        name: playerName,
+        name: safePlayerName,
         isHost: false,
       });
     }
 
     const updatedPlayers = await db.orm.public.Player.where({ roomId: room.id }).all();
     return this.mapRoom(room, updatedPlayers);
+  }
+
+  private normalizeDisplayName(value: string | null | undefined, fallback: string): string {
+    const trimmed = value?.trim() ?? '';
+
+    if (!trimmed) {
+      return fallback;
+    }
+
+    return trimmed.slice(0, 50);
   }
 
   private async generateUniqueRoomCode(

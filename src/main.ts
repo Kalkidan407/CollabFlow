@@ -26,9 +26,10 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Who Would…? API')
-    .setDescription('Game room backend for the multiplayer “Who Would…?” experience.')
+    .setDescription(
+      'Public room-based game API. Users join a room using a room code and a display name; no login or registration is required.',
+    )
     .setVersion('1.0')
-    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

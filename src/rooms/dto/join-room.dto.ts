@@ -16,14 +16,14 @@ export class JoinRoomDto {
   code: string;
 
   @ApiProperty({
-    description: 'Player display name',
-    minLength: 2,
-    maxLength: 30,
+    description: 'Player display name. Empty values are allowed and will be normalized.',
+    minLength: 0,
+    maxLength: 50,
     example: 'Taylor',
+    required: false,
   })
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
-  @IsNotEmpty()
-  @Length(2, 30)
+  @Length(0, 50)
   name: string;
 }

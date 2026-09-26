@@ -8,6 +8,7 @@ import type { RoomRecord } from './rooms.service.js';
 @ApiTags('rooms')
 @Controller('rooms')
 export class RoomsController {
+    
   constructor(private readonly roomsService: RoomsService) {}
 
   @Get()
@@ -32,5 +33,6 @@ export class RoomsController {
   async joinRoom(@Body() body: JoinRoomDto): Promise<RoomRecord> {
     return this.roomsService.joinRoom(body.code, body.name);
   }
+
 }
 
