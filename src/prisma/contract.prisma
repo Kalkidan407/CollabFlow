@@ -4,7 +4,8 @@ model Room {
   code                 String                     @unique
   status               String                     @default("WAITING")
   maxPlayers           Int                        @default(10)
-  questionCount        Int                        @default(10)
+  timeLimit            Int                        @default(30)
+  questionCount        Int                        @default(0)
   currentQuestionIndex Int                        @default(0)
   createdAt            TimestamptzString          @default(now())
   updatedAt            temporal.updatedAtString()

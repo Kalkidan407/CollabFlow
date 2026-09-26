@@ -33,22 +33,35 @@ export class GamesService {
     }
 
     const players = await db.orm.public.Player.where({ roomId: room.id }).all();
-    const questions = await db.orm.public.Question.all();
+    const gameQuestions = await db.orm.public.GameQuestion.where({ roomId: room.id }).all();
 
-    if (!questions.length) {
-      throw new Error('No questions available for this game.');
+    if (!gameQuestions.length) {
+      throw new Error('No questions available for this game. Add questions to this room before starting.');
     }
 
-    const selectedQuestions = questions.slice(0, room.questionCount || questions.length);
+    const selectedQuestions = (
+      await Promise.all(
+        gameQuestions
+          .sort((a, b) => a.questionOrder - b.questionOrder)
+          .slice(0, room.questionCount || gameQuestions.length)
+          .map(async (gameQuestion) => {
+            const question = await db.orm.public.Question.where({ id: gameQuestion.questionId }).first();
+            if (!question) {
+              return null;
+            }
 
-    await db.orm.public.GameQuestion.where({ roomId: room.id }).deleteAll();
+            return {
+              id: question.id,
+              text: question.text,
+              category: question.category,
+              order: gameQuestion.questionOrder,
+            };
+          }),
+      )
+    ).filter((question): question is NonNullable<typeof question> => Boolean(question));
 
-    for (const [index, question] of selectedQuestions.entries()) {
-      await db.orm.public.GameQuestion.create({
-        roomId: room.id,
-        questionId: question.id,
-        questionOrder: index + 1,
-      });
+    if (!selectedQuestions.length) {
+      throw new Error('No questions available for this game.');
     }
 
     const currentQuestion = selectedQuestions[0];
@@ -71,7 +84,7 @@ export class GamesService {
             id: currentQuestion.id,
             text: currentQuestion.text,
             category: currentQuestion.category,
-            order: 1,
+            order: currentQuestion.order,
           }
         : null,
       questionCount: selectedQuestions.length,

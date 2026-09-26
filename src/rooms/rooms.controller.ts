@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AddQuestionsDto } from './dto/add-questions.dto.js';
 import { CreateRoomDto } from './dto/create-room.dto.js';
 import { JoinRoomDto } from './dto/join-room.dto.js';
 import { RoomsService } from './rooms.service.js';
@@ -8,7 +9,7 @@ import type { RoomRecord } from './rooms.service.js';
 @ApiTags('rooms')
 @Controller('rooms')
 export class RoomsController {
-    
+
   constructor(private readonly roomsService: RoomsService) {}
 
   @Get()
@@ -23,7 +24,19 @@ export class RoomsController {
   @ApiResponse({ status: 201, description: 'Room created successfully.' })
   @ApiBody({ type: CreateRoomDto })
   async createRoom(@Body() body: CreateRoomDto): Promise<RoomRecord> {
-    return this.roomsService.createRoom(body.name);
+    return this.roomsService.createRoom(body.name, { maxPlayers: body.maxPlayers, timeLimit: body.timeLimit });
+  }
+
+  @Post(':code/questions')
+  @ApiOperation({ summary: 'Add questions to an existing room after it is created' })
+  @ApiParam({ name: 'code', description: '6-character room code', example: 'AB12CD' })
+  @ApiResponse({ status: 201, description: 'Questions added to the room.' })
+  @ApiBody({ type: AddQuestionsDto })
+  async addQuestionsToRoom(
+    @Param('code') code: string,
+    @Body() body: AddQuestionsDto,
+  ): Promise<RoomRecord> {
+    return this.roomsService.addQuestionsToRoom(code, body.questions, { questionCount: body.questionCount });
   }
 
   @Post('join')

@@ -5,15 +5,87 @@ import { RoomsService } from './rooms.service.js';
 describe('RoomsService', () => {
   let service: RoomsService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [RoomsService, PrismaService],
-    }).compile();
+  beforeEach(() => {
+    const roomState = {
+      id: 'room-1',
+      code: 'AB12CD',
+      status: 'WAITING',
+      maxPlayers: 10,
+      questionCount: 2,
+      currentQuestionIndex: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-    service = module.get<RoomsService>(RoomsService);
+    const fakeDb = {
+      orm: {
+        public: {
+          Room: {
+            create: async (data: any) => ({ id: 'room-1', code: 'AB12CD', ...data }),
+            where: (criteria: any) => ({
+              first: async () => {
+                if (criteria && (criteria.code === 'AB12CD' || criteria.id === 'room-1')) {
+                  return { ...roomState };
+                }
+                return null;
+              },
+              update: async (data: any) => {
+                roomState.questionCount = data.questionCount;
+                roomState.updatedAt = new Date();
+                return { ...roomState, ...data };
+              },
+            }),
+          },
+          Player: {
+            create: async (data: any) => ({ id: 'player-1', ...data, joinedAt: new Date() }),
+            where: () => ({
+              all: async () => [{ id: 'player-1', name: 'Host', roomId: 'room-1', isHost: true, joinedAt: new Date() }],
+            }),
+          },
+          Question: {
+            create: async (data: any) => ({ id: `q-${Math.random().toString(16).slice(2)}`, ...data, createdAt: new Date() }),
+          },
+          GameQuestion: {
+            where: () => ({
+              all: async () => [],
+            }),
+            create: async (data: any) => ({ id: `gq-${Math.random().toString(16).slice(2)}`, ...data }),
+          },
+        },
+      },
+    };
+
+    service = new RoomsService({ getClient: () => fakeDb } as unknown as PrismaService);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('should create a room without questions', async () => {
+    await expect(service.createRoom('Host')).resolves.toMatchObject({
+      code: 'AB12CD',
+      players: [{ name: 'Host' }],
+    });
+  });
+
+  it('should add host-provided questions to an existing room', async () => {
+    await expect(
+      service.addQuestionsToRoom('AB12CD', ['Who would win?', 'Who is most likely to be late?']),
+    ).resolves.toMatchObject({
+      code: 'AB12CD',
+      questionCount: 2,
+    });
+  });
+
+  it('should allow a host to choose a custom question count above 10', async () => {
+    await expect(
+      service.addQuestionsToRoom('AB12CD', Array.from({ length: 12 }, (_, index) => `Question ${index + 1}`), {
+        questionCount: 12,
+      }),
+    ).resolves.toMatchObject({
+      code: 'AB12CD',
+      questionCount: 12,
+    });
   });
 });

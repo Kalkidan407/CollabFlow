@@ -15,6 +15,7 @@ export interface RoomRecord {
   code: string;
   status: RoomStatus;
   maxPlayers: number;
+  timeLimit: number;
   questionCount: number;
   currentQuestionIndex: number;
   createdAt: string;
@@ -42,16 +43,19 @@ export class RoomsService {
     );
   }
 
-  async createRoom(hostName: string): Promise<RoomRecord> {
+  async createRoom(hostName: string, options?: { maxPlayers?: number; timeLimit?: number }): Promise<RoomRecord> {
     const db = this.prisma.getClient();
     const code = await this.generateUniqueRoomCode(db);
     const safeHostName = this.normalizeDisplayName(hostName, 'Host');
+    const maxPlayers = this.normalizeMaxPlayers(options?.maxPlayers ?? 10);
+    const timeLimit = this.normalizeTimeLimit(options?.timeLimit ?? 30);
 
     const room = await db.orm.public.Room.create({
       code,
       status: 'WAITING',
-      maxPlayers: 10,
-      questionCount: 10,
+      maxPlayers,
+      timeLimit,
+      questionCount: 0,
       currentQuestionIndex: 0,
     });
 
@@ -61,7 +65,55 @@ export class RoomsService {
       isHost: true,
     });
 
-    return this.mapRoom(room, [host]);
+    const roomWithPlayers = await db.orm.public.Room.where({ id: room.id }).first();
+    const players = await db.orm.public.Player.where({ roomId: room.id }).all();
+    return this.mapRoom(roomWithPlayers!, players);
+  }
+
+  async addQuestionsToRoom(
+    code: string,
+    questions: string[],
+    options?: { questionCount?: number },
+  ): Promise<RoomRecord> {
+    const db = this.prisma.getClient();
+    const room = await db.orm.public.Room.where({ code: code.toUpperCase() }).first();
+
+    if (!room) {
+      throw new NotFoundException(`Room ${code} was not found.`);
+    }
+
+    const normalizedQuestions = this.normalizeQuestions(questions);
+    if (!normalizedQuestions.length) {
+      throw new Error('At least one question is required.');
+    }
+
+    const existingQuestions = await db.orm.public.GameQuestion.where({ roomId: room.id }).all();
+    const nextOrder = existingQuestions.length + 1;
+
+    for (const [index, questionText] of normalizedQuestions.entries()) {
+      const question = await db.orm.public.Question.create({
+        text: questionText,
+        category: 'custom',
+      });
+
+      await db.orm.public.GameQuestion.create({
+        roomId: room.id,
+        questionId: question.id,
+        questionOrder: nextOrder + index,
+      });
+    }
+
+    const totalQuestions = existingQuestions.length + normalizedQuestions.length;
+    const preferredQuestionCount = options?.questionCount ?? totalQuestions;
+    const safeQuestionCount = this.normalizeQuestionCount(preferredQuestionCount, totalQuestions);
+
+    await db.orm.public.Room.where({ id: room.id }).update({
+      questionCount: safeQuestionCount,
+    });
+
+    const updatedRoom = await db.orm.public.Room.where({ id: room.id }).first();
+    const players = await db.orm.public.Player.where({ roomId: room.id }).all();
+    return this.mapRoom(updatedRoom!, players);
   }
 
   async joinRoom(code: string, playerName: string): Promise<RoomRecord> {
@@ -102,6 +154,31 @@ export class RoomsService {
     return trimmed.slice(0, 50);
   }
 
+  private normalizeMaxPlayers(value: number | undefined): number {
+    const safeValue = typeof value === 'number' && Number.isInteger(value) ? value : 10;
+    return Math.min(Math.max(safeValue, 2), 30);
+  }
+
+  private normalizeTimeLimit(value: number | undefined): number {
+    const safeValue = typeof value === 'number' && Number.isInteger(value) ? value : 30;
+    return Math.min(Math.max(safeValue, 15), 180);
+  }
+
+  private normalizeQuestionCount(value: number | undefined, maxAllowed: number): number {
+    const safeValue = typeof value === 'number' && Number.isInteger(value) ? value : maxAllowed;
+    return Math.max(1, Math.min(safeValue, maxAllowed));
+  }
+
+  private normalizeQuestions(questions: string[] | null | undefined): string[] {
+    const normalized = (questions ?? [])
+      .filter((question): question is string => typeof question === 'string')
+      .map((question) => question.trim())
+      .filter((question) => question.length > 0)
+      .map((question) => question.slice(0, 500));
+
+    return Array.from(new Set(normalized));
+  }
+
   private async generateUniqueRoomCode(
     db: ReturnType<PrismaService['getClient']>,
   ): Promise<string> {
@@ -128,6 +205,7 @@ export class RoomsService {
       code: string;
       status: string;
       maxPlayers: number;
+      timeLimit: number;
       questionCount: number;
       currentQuestionIndex: number;
       createdAt: string | Date;
@@ -145,6 +223,7 @@ export class RoomsService {
       code: room.code,
       status: room.status as RoomStatus,
       maxPlayers: room.maxPlayers,
+      timeLimit: room.timeLimit,
       questionCount: room.questionCount,
       currentQuestionIndex: room.currentQuestionIndex,
       createdAt: new Date(room.createdAt).toISOString(),
@@ -157,5 +236,6 @@ export class RoomsService {
       })),
     };
   }
+
 }
 

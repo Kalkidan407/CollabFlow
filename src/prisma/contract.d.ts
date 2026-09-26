@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'16d861cf4a26c5e614b75f7b4e4a73ba53fd8fc16db8b3254a3f9190a2466e56'>;
+  StorageHashBase<'e123375ba7e8320545df9e3a8e4377f4793a175ff9ad5535a83aebf1c96dcceb'>;
 export type ExecutionHash =
   ExecutionHashBase<'50b01c0c743e8b3afb6125c2ed7375b1eb381d1a81a9438addfd4c0a5c109a8b'>;
 export type ProfileHash =
@@ -277,6 +277,7 @@ export type FieldOutputTypes = {
       readonly maxPlayers: CodecTypes['pg/int4@1']['output'];
       readonly questionCount: CodecTypes['pg/int4@1']['output'];
       readonly status: CodecTypes['pg/text@1']['output'];
+      readonly timeLimit: CodecTypes['pg/int4@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
     readonly Vote: {
@@ -318,6 +319,7 @@ export type FieldInputTypes = {
       readonly maxPlayers: CodecTypes['pg/int4@1']['input'];
       readonly questionCount: CodecTypes['pg/int4@1']['input'];
       readonly status: CodecTypes['pg/text@1']['input'];
+      readonly timeLimit: CodecTypes['pg/int4@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
     readonly Vote: {
@@ -359,6 +361,7 @@ export type StorageColumnTypes = {
       readonly maxPlayers: CodecTypes['pg/int4@1']['output'];
       readonly questionCount: CodecTypes['pg/int4@1']['output'];
       readonly status: CodecTypes['pg/text@1']['output'];
+      readonly timeLimit: CodecTypes['pg/int4@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
     readonly Vote: {
@@ -400,6 +403,7 @@ export type StorageColumnInputTypes = {
       readonly maxPlayers: CodecTypes['pg/int4@1']['input'];
       readonly questionCount: CodecTypes['pg/int4@1']['input'];
       readonly status: CodecTypes['pg/text@1']['input'];
+      readonly timeLimit: CodecTypes['pg/int4@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
     readonly Vote: {
@@ -451,6 +455,7 @@ export namespace Models {
     maxPlayers: CodecTypes['pg/int4@1']['output'];
     questionCount: CodecTypes['pg/int4@1']['output'];
     status: CodecTypes['pg/text@1']['output'];
+    timeLimit: CodecTypes['pg/int4@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     gameQuestions: public_GameQuestion[];
     players: public_Player[];
@@ -695,7 +700,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/int4@1', 10>;
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
                   };
                 };
                 readonly status: {
@@ -705,6 +710,15 @@ type ContractBase = Omit<
                   readonly default: {
                     readonly kind: 'literal';
                     readonly value: DefaultLiteralValue<'pg/text@1', 'WAITING'>;
+                  };
+                };
+                readonly timeLimit: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 30>;
                   };
                 };
                 readonly updatedAt: {
@@ -1060,6 +1074,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly timeLimit: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly updatedAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -1111,6 +1129,7 @@ type ContractBase = Omit<
                 readonly maxPlayers: { readonly column: 'maxPlayers' };
                 readonly questionCount: { readonly column: 'questionCount' };
                 readonly status: { readonly column: 'status' };
+                readonly timeLimit: { readonly column: 'timeLimit' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };
