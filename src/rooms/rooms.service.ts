@@ -223,7 +223,7 @@ export class RoomsService {
       code: room.code,
       status: room.status as RoomStatus,
       maxPlayers: room.maxPlayers,
-      timeLimit: room.timeLimit,
+      timeLimit: Number(room.timeLimit ?? 30),
       questionCount: room.questionCount,
       currentQuestionIndex: room.currentQuestionIndex,
       createdAt: new Date(room.createdAt).toISOString(),

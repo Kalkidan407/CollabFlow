@@ -11,6 +11,7 @@ describe('RoomsService', () => {
       code: 'AB12CD',
       status: 'WAITING',
       maxPlayers: 10,
+      timeLimit: 30,
       questionCount: 2,
       currentQuestionIndex: 0,
       createdAt: new Date(),
@@ -21,7 +22,11 @@ describe('RoomsService', () => {
       orm: {
         public: {
           Room: {
-            create: async (data: any) => ({ id: 'room-1', code: 'AB12CD', ...data }),
+            create: async (data: any) => {
+              const created = { id: 'room-1', code: 'AB12CD', ...data };
+              Object.assign(roomState, created);
+              return created;
+            },
             where: (criteria: any) => ({
               first: async () => {
                 if (criteria && (criteria.code === 'AB12CD' || criteria.id === 'room-1')) {
@@ -63,10 +68,22 @@ describe('RoomsService', () => {
   });
 
   it('should create a room without questions', async () => {
-    await expect(service.createRoom('Host')).resolves.toMatchObject({
-      code: 'AB12CD',
+    const room = await service.createRoom('Host');
+
+    expect(room).toMatchObject({
+      timeLimit: 30,
       players: [{ name: 'Host' }],
     });
+    expect(room.code).toMatch(/^[A-Z0-9]{6}$/);
+  });
+
+  it('should preserve a custom time limit in seconds', async () => {
+    const room = await service.createRoom('Host', { timeLimit: 45 });
+
+    expect(room).toMatchObject({
+      timeLimit: 45,
+    });
+    expect(room.code).toMatch(/^[A-Z0-9]{6}$/);
   });
 
   it('should add host-provided questions to an existing room', async () => {
