@@ -3,6 +3,7 @@ import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/s
 import { AddQuestionsDto } from './dto/add-questions.dto.js';
 import { CreateRoomDto } from './dto/create-room.dto.js';
 import { JoinRoomDto } from './dto/join-room.dto.js';
+import { QuestionCategory } from './rooms.service.js';
 import { RoomsService } from './rooms.service.js';
 import type { RoomRecord } from './rooms.service.js';
 
@@ -12,6 +13,8 @@ export class RoomsController {
 
   constructor(private readonly roomsService: RoomsService) {}
 
+  // This is the NestJS version of a Spring @RequestMapping / @GetMapping.
+  // The decorator tells NestJS: handle GET requests to /rooms.
   @Get()
   @ApiOperation({ summary: 'List all rooms' })
   @ApiResponse({ status: 200, description: 'Rooms returned successfully.' })
@@ -19,6 +22,8 @@ export class RoomsController {
     return this.roomsService.listRooms();
   }
 
+  // This is the NestJS equivalent of @PostMapping in Spring Boot.
+  // The request body is validated against CreateRoomDto before entering this method.
   @Post()
   @ApiOperation({ summary: 'Create a new room' })
   @ApiResponse({ status: 201, description: 'Room created successfully.' })
@@ -45,6 +50,22 @@ export class RoomsController {
   @ApiBody({ type: JoinRoomDto })
   async joinRoom(@Body() body: JoinRoomDto): Promise<RoomRecord> {
     return this.roomsService.joinRoom(body.code, body.name);
+  }
+
+  @Post('questions')
+  @ApiOperation({ summary: 'Create a reusable question with a category for the room host to reuse later' })
+  @ApiResponse({ status: 201, description: 'Question created successfully.' })
+  async createQuestion(
+    @Body() body: { text: string; category?: QuestionCategory },
+  ): Promise<{ id: string; text: string; category: QuestionCategory }> {
+    return this.roomsService.createQuestion(body.text, body.category);
+  }
+
+  @Post(':code/start')
+  @ApiOperation({ summary: 'Start the room even before it reaches the max player count' })
+  @ApiResponse({ status: 200, description: 'Room started successfully.' })
+  async startRoom(@Param('code') code: string): Promise<RoomRecord> {
+    return this.roomsService.startRoom(code);
   }
 
 }

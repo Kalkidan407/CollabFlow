@@ -35,7 +35,12 @@ describe('RoomsService', () => {
                 return null;
               },
               update: async (data: any) => {
-                roomState.questionCount = data.questionCount;
+                if (typeof data.questionCount === 'number') {
+                  roomState.questionCount = data.questionCount;
+                }
+                if (typeof data.status === 'string') {
+                  roomState.status = data.status;
+                }
                 roomState.updatedAt = new Date();
                 return { ...roomState, ...data };
               },
@@ -103,6 +108,20 @@ describe('RoomsService', () => {
     ).resolves.toMatchObject({
       code: 'AB12CD',
       questionCount: 12,
+    });
+  });
+
+  it('should create a reusable question with a supported category', async () => {
+    await expect(service.createQuestion('Who would win?', 'FUN')).resolves.toMatchObject({
+      text: 'Who would win?',
+      category: 'FUN',
+    });
+  });
+
+  it('should allow the host to start the room even before the room is full', async () => {
+    await expect(service.startRoom('AB12CD')).resolves.toMatchObject({
+      code: 'AB12CD',
+      status: 'IN_PROGRESS',
     });
   });
 });

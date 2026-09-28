@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 export type RoomStatus = 'WAITING' | 'IN_PROGRESS' | 'FINISHED';
+export type QuestionCategory = 'CUSTOM' | 'FUN' | 'SERIOUS' | 'ICEBREAKER';
 
 export interface RoomPlayer {
   id: string;
@@ -144,6 +145,51 @@ export class RoomsService {
     return this.mapRoom(room, updatedPlayers);
   }
 
+  async createQuestion(text: string, category: QuestionCategory = 'CUSTOM'): Promise<{ id: string; text: string; category: QuestionCategory }> {
+    const normalizedText = this.normalizeQuestions([text])[0];
+    if (!normalizedText) {
+      throw new Error('Question text is required.');
+    }
+
+    const safeCategory = this.normalizeQuestionCategory(category);
+    const db = this.prisma.getClient();
+    const question = await db.orm.public.Question.create({
+      text: normalizedText,
+      category: safeCategory,
+    });
+
+    return {
+      id: question.id,
+      text: question.text,
+      category: question.category as QuestionCategory,
+    };
+  }
+
+  async startRoom(code: string): Promise<RoomRecord> {
+    const db = this.prisma.getClient();
+    const room = await db.orm.public.Room.where({ code: code.toUpperCase() }).first();
+
+    if (!room) {
+      throw new NotFoundException(`Room ${code} was not found.`);
+    }
+
+    if (room.status === 'FINISHED') {
+      throw new Error('Cannot start a finished room.');
+    }
+
+    const players = await db.orm.public.Player.where({ roomId: room.id }).all();
+    if (players.length < 1) {
+      throw new Error('At least one player is required to start the game.');
+    }
+
+    await db.orm.public.Room.where({ id: room.id }).update({
+      status: 'IN_PROGRESS',
+    });
+
+    const updatedRoom = await db.orm.public.Room.where({ id: room.id }).first();
+    return this.mapRoom(updatedRoom!, players);
+  }
+
   private normalizeDisplayName(value: string | null | undefined, fallback: string): string {
     const trimmed = value?.trim() ?? '';
 
@@ -167,6 +213,12 @@ export class RoomsService {
   private normalizeQuestionCount(value: number | undefined, maxAllowed: number): number {
     const safeValue = typeof value === 'number' && Number.isInteger(value) ? value : maxAllowed;
     return Math.max(1, Math.min(safeValue, maxAllowed));
+  }
+
+  private normalizeQuestionCategory(value: string | undefined): QuestionCategory {
+    const validCategories: QuestionCategory[] = ['CUSTOM', 'FUN', 'SERIOUS', 'ICEBREAKER'];
+    const safeValue = typeof value === 'string' ? value.trim().toUpperCase() : 'CUSTOM';
+    return validCategories.includes(safeValue as QuestionCategory) ? (safeValue as QuestionCategory) : 'CUSTOM';
   }
 
   private normalizeQuestions(questions: string[] | null | undefined): string[] {

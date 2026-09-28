@@ -4,11 +4,18 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AllExceptionsFilter } from './common/all-exceptions.filter.js';
 import { AppModule } from './app.module.js';
 
+// This is the NestJS app bootstrap method.
+// It is async because app creation and startup steps are asynchronous in Node.js,
+// just like a Spring Boot main method starts the application context.
+// We must wait for the app to be created before we configure filters, pipes, docs, and listen.
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Global exception filter: catches errors from all controllers and returns a consistent JSON response.
   app.useGlobalFilters(new AllExceptionsFilter());
 
+  // ValidationPipe checks request DTOs automatically.
+  // This is similar to Spring Boot validation with @Valid and Bean Validation.
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -43,6 +50,9 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Swagger configuration lives here.
+  // In Spring Boot, you usually configure OpenAPI/Swagger in a config class.
+  // In NestJS, this is done in the bootstrap file with DocumentBuilder + SwaggerModule.
   const config = new DocumentBuilder()
     .setTitle('Who Would…? API')
     .setDescription(
@@ -51,7 +61,11 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
 
+  // Generate the OpenAPI document from the NestJS app metadata and route decorators.
   const document = SwaggerModule.createDocument(app, config);
+
+  // Expose the Swagger UI at /docs.
+  // This is the NestJS equivalent of a Springdoc /swagger-ui/index.html endpoint.
   SwaggerModule.setup('docs', app, document, {
     customSiteTitle: 'Who Would…? API Docs',
     swaggerOptions: {
@@ -59,6 +73,7 @@ async function bootstrap() {
     },
   });
 
+  // Start the HTTP server after all configuration is ready.
   await app.listen(process.env.PORT ?? 3000);
 }
 await bootstrap();
