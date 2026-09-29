@@ -361,6 +361,13 @@
                   "kind": "scalar"
                 }
               },
+              "timeLimitUnit": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -441,6 +448,9 @@
                 },
                 "timeLimit": {
                   "column": "timeLimit"
+                },
+                "timeLimitUnit": {
+                  "column": "timeLimitUnit"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -850,6 +860,15 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "timeLimitUnit": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "SECONDS"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
@@ -1028,7 +1047,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "e123375ba7e8320545df9e3a8e4377f4793a175ff9ad5535a83aebf1c96dcceb"
+    "storageHash": "7bb349db159a22c69fbbecd744c0fa6834238bba321070ade07524985dbb2b48"
   },
   "execution": {
     "executionHash": "50b01c0c743e8b3afb6125c2ed7375b1eb381d1a81a9438addfd4c0a5c109a8b",

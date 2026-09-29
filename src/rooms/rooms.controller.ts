@@ -3,7 +3,7 @@ import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/s
 import { AddQuestionsDto } from './dto/add-questions.dto.js';
 import { CreateRoomDto } from './dto/create-room.dto.js';
 import { JoinRoomDto } from './dto/join-room.dto.js';
-import { QuestionCategory } from './rooms.service.js';
+import { QuestionCategory, TimeUnit } from './rooms.service.js';
 import { RoomsService } from './rooms.service.js';
 import type { RoomRecord } from './rooms.service.js';
 
@@ -20,6 +20,14 @@ export class RoomsController {
   @ApiResponse({ status: 200, description: 'Rooms returned successfully.' })
   async getRooms(): Promise<RoomRecord[]> {
     return this.roomsService.listRooms();
+  }
+
+  @Get(':code/status')
+  @ApiOperation({ summary: 'Get the current room status and remaining countdown time for the frontend' })
+  @ApiResponse({ status: 200, description: 'Room status returned successfully.' })
+  @ApiParam({ name: 'code', description: '6-character room code', example: 'AB12CD' })
+  async getRoomStatus(@Param('code') code: string): Promise<RoomRecord & { reminder?: string; timeRemainingSeconds?: number }> {
+    return this.roomsService.checkRoomStatus(code);
   }
 
   // This is the NestJS equivalent of @PostMapping in Spring Boot.
@@ -66,6 +74,16 @@ export class RoomsController {
   @ApiResponse({ status: 200, description: 'Room started successfully.' })
   async startRoom(@Param('code') code: string): Promise<RoomRecord> {
     return this.roomsService.startRoom(code);
+  }
+
+  @Post(':code/extend-time')
+  @ApiOperation({ summary: 'Give the host more time to finish the game before it auto-finishes' })
+  @ApiResponse({ status: 200, description: 'Time extended successfully.' })
+  async extendTime(
+    @Param('code') code: string,
+    @Body() body: { amount?: number; timeUnit?: TimeUnit },
+  ): Promise<RoomRecord> {
+    return this.roomsService.extendTime(code, body.amount ?? 15, body.timeUnit ?? 'SECONDS');
   }
 
 }

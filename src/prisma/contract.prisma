@@ -1,65 +1,139 @@
-// use prisma-8
+// Room-centric schema for the collaborative final-year project platform
 model Room {
-  id                   String                     @id @default(uuid())
-  code                 String                     @unique
-  status               String                     @default("WAITING")
-  maxPlayers           Int                        @default(10)
-  timeLimit            Int                        @default(30)
-  questionCount        Int                        @default(0)
-  currentQuestionIndex Int                        @default(0)
-  createdAt            TimestamptzString          @default(now())
-  updatedAt            temporal.updatedAtString()
+  id              String            @id @default(uuid())
+  code            String            @unique
+  title           String
+  description     String?
+  status          String            @default("IDEATION")
+  teamSize        Int               @default(5)
+  academicYear    String
+  advisorName     String?
+  advisorEmail    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
-  players              Player[]
-  gameQuestions        GameQuestion[]
-  votes                Vote[]
+  members         RoomMember[]
+  ideas           RoomIdea[]
+  requirements    Requirement[]
+  reviews         AdvisorReview[]
+  sprints         Sprint[]
+  activities      RoomActivity[]
+  documents       RoomDocument[]
 }
 
-model Player {
-  id            String            @id @default(uuid())
+model RoomMember {
+  id          String      @id @default(uuid())
+  roomId      String
+  name        String
+  email       String?
+  role        String      @default("MEMBER")
+  joinedAt    DateTime    @default(now())
+
+  room        Room        @relation(fields: [roomId], references: [id])
+
+  @@unique([roomId, email])
+}
+
+model RoomIdea {
+  id              String          @id @default(uuid())
+  roomId          String
+  submittedBy     String
+  problem         String
+  solution        String
+  stakeholders    String[]
+  targetUsers     String[]
+  description     String?
+  votes           IdeaVote[]
+  status          String          @default("PENDING")
+  createdAt       DateTime        @default(now())
+
+  room            Room            @relation(fields: [roomId], references: [id])
+}
+
+model IdeaVote {
+  id          String      @id @default(uuid())
+  ideaId      String
+  voterName   String
+  createdAt   DateTime    @default(now())
+
+  idea        RoomIdea    @relation(fields: [ideaId], references: [id])
+
+  @@unique([ideaId, voterName])
+}
+
+model AdvisorReview {
+  id            String      @id @default(uuid())
   roomId        String
-  name          String
-  isHost        Boolean           @default(false)
-  joinedAt      TimestamptzString @default(now())
+  advisorName   String
+  advisorEmail  String?
+  status        String      @default("PENDING")
+  comments      String?
+  suggestions   String?
+  approvedAt    DateTime?
+  createdAt     DateTime    @default(now())
 
-  room          Room              @relation(fields:[roomId], references:[id])
-  votes         Vote[]            @relation("Voter")
-  votesReceived Vote[]            @relation("VotedFor")
+  room          Room        @relation(fields: [roomId], references: [id])
 }
 
-model Question {
-  id            String            @id @default(uuid())
-  text          String
-  category      String
-  createdAt     TimestamptzString @default(now())
+model Requirement {
+  id                  String      @id @default(uuid())
+  roomId              String
+  title               String
+  description         String
+  userStories         String[]
+  acceptanceCriteria  String[]
+  priority            String      @default("MEDIUM")
+  type                String      @default("FUNCTIONAL")
+  createdAt           DateTime    @default(now())
 
-  gameQuestions GameQuestion[]
+  room                Room        @relation(fields: [roomId], references: [id])
 }
 
-model GameQuestion {
-  id            String   @id @default(uuid())
-  roomId        String
-  questionId    String
-  questionOrder Int
+model Sprint {
+  id          String      @id @default(uuid())
+  roomId      String
+  name        String
+  goal        String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      String      @default("PLANNED")
+  createdAt   DateTime    @default(now())
 
-  room          Room     @relation(fields:[roomId], references:[id])
-  question      Question @relation(fields:[questionId], references:[id])
-
-  votes         Vote[]
+  room        Room        @relation(fields: [roomId], references: [id])
+  tasks       Task[]
 }
 
-model Vote {
-  id             String            @id @default(uuid())
-  roomId         String
-  gameQuestionId String
-  voterId        String
-  votedForId     String
-  createdAt      TimestamptzString @default(now())
+model Task {
+  id          String      @id @default(uuid())
+  roomId      String
+  sprintId    String?
+  title       String
+  description String?
+  assignee    String?
+  status      String      @default("TODO")
+  priority    String      @default("MEDIUM")
+  createdAt   DateTime    @default(now())
 
-  room           Room              @relation(fields:[roomId], references:[id])
-  gameQuestion   GameQuestion      @relation(fields:[gameQuestionId], references:[id])
-  voter          Player            @relation("Voter", fields:[voterId], references:[id])
-  votedFor       Player            @relation("VotedFor", fields:[votedForId], references:[id])
+  sprint      Sprint?     @relation(fields: [sprintId], references: [id])
+}
 
-  @@unique([gameQuestionId, voterId])
+model RoomActivity {
+  id          String      @id @default(uuid())
+  roomId      String
+  actor       String
+  action      String
+  details     String?
+  createdAt   DateTime    @default(now())
+
+  room        Room        @relation(fields: [roomId], references: [id])
+}
+
+model RoomDocument {
+  id          String      @id @default(uuid())
+  roomId      String
+  title       String
+  content     String
+  generatedAt DateTime    @default(now())
+
+  room        Room        @relation(fields: [roomId], references: [id])
 }

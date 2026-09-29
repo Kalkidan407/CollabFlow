@@ -7,7 +7,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import { Injectable } from '@nestjs/common';
 let AppService = class AppService {
     getHello() {
-        return 'Hello World!';
+        return 'CollabFlow platform is running';
+    }
+    getHealth() {
+        return {
+            status: 'ok',
+            service: 'collabflow-api',
+        };
     }
 };
 AppService = __decorate([

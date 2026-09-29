@@ -34,13 +34,13 @@ async function bootstrap() {
         credentials: true,
     });
     const config = new DocumentBuilder()
-        .setTitle('Who Would…? API')
-        .setDescription('Public room-based game API. Users join a room using a room code and a display name; no login or registration is required.')
+        .setTitle('CollabFlow API')
+        .setDescription('Collaborative software-engineering platform for final-year CS/SW student teams. It supports project creation, member onboarding, problem discovery, advisor review, requirements planning, sprint execution, task tracking, project history, and documentation generation.')
         .setVersion('1.0')
         .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document, {
-        customSiteTitle: 'Who Would…? API Docs',
+        customSiteTitle: 'CollabFlow Project Docs',
         swaggerOptions: {
             persistAuthorization: true,
         },

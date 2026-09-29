@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
+
+export enum TimeUnitEnum {
+  SECONDS = 'SECONDS',
+  MINUTES = 'MINUTES',
+  HOURS = 'HOURS',
+  DAYS = 'DAYS',
+}
 
 export class CreateRoomDto {
   @ApiProperty({
@@ -31,9 +38,8 @@ export class CreateRoomDto {
   maxPlayers?: number;
 
   @ApiProperty({
-    description: 'How many seconds each question lasts before the room moves on.',
-    minimum: 15,
-    maximum: 180,
+    description: 'How much time the room gets before auto-finish. The value is converted from the selected unit into seconds internally.',
+    minimum: 1,
     example: 30,
     default: 30,
     required: false,
@@ -41,7 +47,17 @@ export class CreateRoomDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(15)
-  @Max(180)
+  @Min(1)
   timeLimit?: number;
+
+  @ApiProperty({
+    description: 'Unit used for the room time limit. Frontend can select seconds, minutes, hours, or days.',
+    enum: TimeUnitEnum,
+    example: 'MINUTES',
+    default: 'SECONDS',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(TimeUnitEnum)
+  timeUnit?: TimeUnitEnum;
 }

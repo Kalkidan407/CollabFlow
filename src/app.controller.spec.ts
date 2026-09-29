@@ -15,8 +15,15 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return the app status message', () => {
+      expect(appController.getHello()).toBe('CollabFlow platform is running');
+    });
+
+    it('should return the health payload', () => {
+      expect(appController.getHealth()).toEqual({
+        status: 'ok',
+        service: 'collabflow-api',
+      });
     });
   });
 });

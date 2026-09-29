@@ -4,9 +4,10 @@ import { RoomsService } from './rooms.service.js';
 
 describe('RoomsService', () => {
   let service: RoomsService;
+  let roomState: any;
 
   beforeEach(() => {
-    const roomState = {
+    roomState = {
       id: 'room-1',
       code: 'AB12CD',
       status: 'WAITING',
@@ -40,6 +41,15 @@ describe('RoomsService', () => {
                 }
                 if (typeof data.status === 'string') {
                   roomState.status = data.status;
+                }
+                if (typeof data.timeLimit === 'number') {
+                  roomState.timeLimit = data.timeLimit;
+                }
+                if (typeof data.timeLimitUnit === 'string') {
+                  roomState.timeLimitUnit = data.timeLimitUnit;
+                }
+                if (data.updatedAt instanceof Date || typeof data.updatedAt === 'string') {
+                  roomState.updatedAt = new Date(data.updatedAt);
                 }
                 roomState.updatedAt = new Date();
                 return { ...roomState, ...data };
@@ -122,6 +132,54 @@ describe('RoomsService', () => {
     await expect(service.startRoom('AB12CD')).resolves.toMatchObject({
       code: 'AB12CD',
       status: 'IN_PROGRESS',
+    });
+  });
+
+  it('should remind the host once the room passes half of the time limit', async () => {
+    roomState.status = 'IN_PROGRESS';
+    roomState.updatedAt = new Date(Date.now() - 16_000);
+    roomState.timeLimit = 30;
+
+    await expect(service.checkRoomStatus('AB12CD')).resolves.toMatchObject({
+      code: 'AB12CD',
+      status: 'IN_PROGRESS',
+      reminder: expect.stringContaining('add more time'),
+    });
+  });
+
+  it('should finish the room automatically when the time limit is reached', async () => {
+    roomState.status = 'IN_PROGRESS';
+    roomState.updatedAt = new Date(Date.now() - 31_000);
+    roomState.timeLimit = 30;
+
+    await expect(service.checkRoomStatus('AB12CD')).resolves.toMatchObject({
+      code: 'AB12CD',
+      status: 'FINISHED',
+    });
+  });
+
+  it('should allow the host to add more time to an in-progress room', async () => {
+    roomState.status = 'IN_PROGRESS';
+    roomState.updatedAt = new Date(Date.now() - 15_000);
+    roomState.timeLimit = 30;
+
+    await expect(service.extendTime('AB12CD', 20)).resolves.toMatchObject({
+      code: 'AB12CD',
+      status: 'IN_PROGRESS',
+      timeLimit: 50,
+    });
+  });
+
+  it('should convert room creation and extension values using the selected time unit', async () => {
+    const created = await service.createRoom('Host', { timeLimit: 2, timeUnit: 'MINUTES' });
+    expect(created).toMatchObject({
+      timeLimit: 120,
+      timeLimitUnit: 'MINUTES',
+    });
+
+    await expect(service.extendTime('AB12CD', 30, 'SECONDS')).resolves.toMatchObject({
+      timeLimit: 150,
+      timeLimitUnit: 'SECONDS',
     });
   });
 });

@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 
 export type RoomStatus = 'WAITING' | 'IN_PROGRESS' | 'FINISHED';
 export type QuestionCategory = 'CUSTOM' | 'FUN' | 'SERIOUS' | 'ICEBREAKER';
+export type TimeUnit = 'SECONDS' | 'MINUTES' | 'HOURS' | 'DAYS';
 
 export interface RoomPlayer {
   id: string;
@@ -17,6 +18,8 @@ export interface RoomRecord {
   status: RoomStatus;
   maxPlayers: number;
   timeLimit: number;
+  timeLimitUnit: TimeUnit;
+  timeRemainingSeconds?: number;
   questionCount: number;
   currentQuestionIndex: number;
   createdAt: string;
@@ -44,18 +47,23 @@ export class RoomsService {
     );
   }
 
-  async createRoom(hostName: string, options?: { maxPlayers?: number; timeLimit?: number }): Promise<RoomRecord> {
+  async createRoom(
+    hostName: string,
+    options?: { maxPlayers?: number; timeLimit?: number; timeUnit?: TimeUnit },
+  ): Promise<RoomRecord> {
     const db = this.prisma.getClient();
     const code = await this.generateUniqueRoomCode(db);
     const safeHostName = this.normalizeDisplayName(hostName, 'Host');
     const maxPlayers = this.normalizeMaxPlayers(options?.maxPlayers ?? 10);
-    const timeLimit = this.normalizeTimeLimit(options?.timeLimit ?? 30);
+    const timeUnit = this.normalizeTimeUnit(options?.timeUnit ?? 'SECONDS');
+    const timeLimit = this.normalizeTimeLimit(options?.timeLimit ?? 30, timeUnit);
 
     const room = await db.orm.public.Room.create({
       code,
       status: 'WAITING',
       maxPlayers,
       timeLimit,
+      timeLimitUnit: timeUnit,
       questionCount: 0,
       currentQuestionIndex: 0,
     });
@@ -190,6 +198,78 @@ export class RoomsService {
     return this.mapRoom(updatedRoom!, players);
   }
 
+  async checkRoomStatus(code: string): Promise<RoomRecord & { reminder?: string }> {
+    const db = this.prisma.getClient();
+    const room = await db.orm.public.Room.where({ code: code.toUpperCase() }).first();
+
+    if (!room) {
+      throw new NotFoundException(`Room ${code} was not found.`);
+    }
+
+    const players = await db.orm.public.Player.where({ roomId: room.id }).all();
+    const now = Date.now();
+    const roomUpdatedAt = new Date(room.updatedAt).getTime();
+    const elapsedSeconds = (now - roomUpdatedAt) / 1000;
+    const timeLimitSeconds = Number(room.timeLimit ?? 30);
+    const halfwayThreshold = timeLimitSeconds / 2;
+    const timeRemainingSeconds = Math.max(0, timeLimitSeconds - elapsedSeconds);
+    const timeLimitUnit = this.normalizeTimeUnit(room.timeLimitUnit ?? 'SECONDS');
+
+    if (room.status === 'IN_PROGRESS' && elapsedSeconds >= timeLimitSeconds) {
+      await db.orm.public.Room.where({ id: room.id }).update({
+        status: 'FINISHED',
+      });
+
+      const finishedRoom = await db.orm.public.Room.where({ id: room.id }).first();
+      return {
+        ...this.mapRoom(finishedRoom!, players),
+        status: 'FINISHED',
+        timeLimitUnit,
+        timeRemainingSeconds: 0,
+      };
+    }
+
+    const reminder =
+      room.status === 'IN_PROGRESS' && elapsedSeconds > halfwayThreshold
+        ? 'The room has passed the halfway mark. Please add more time to keep the game going if you do not finish in time.'
+        : undefined;
+
+    return {
+      ...this.mapRoom(room, players),
+      timeLimitUnit,
+      timeRemainingSeconds,
+      ...(reminder ? { reminder } : {}),
+    };
+  }
+
+  async extendTime(code: string, amount: number, timeUnit: TimeUnit = 'SECONDS'): Promise<RoomRecord> {
+    const db = this.prisma.getClient();
+    const room = await db.orm.public.Room.where({ code: code.toUpperCase() }).first();
+
+    if (!room) {
+      throw new NotFoundException(`Room ${code} was not found.`);
+    }
+
+    if (room.status === 'FINISHED') {
+      throw new Error('Cannot extend time for a finished room.');
+    }
+
+    const normalizedTimeUnit = this.normalizeTimeUnit(timeUnit);
+    const extraSeconds = this.toSeconds(this.normalizeTimeAmount(amount), normalizedTimeUnit);
+    const nextTimeLimit = Number(room.timeLimit ?? 30) + extraSeconds;
+
+    await db.orm.public.Room.where({ id: room.id }).update({
+      timeLimit: Math.min(nextTimeLimit, 30 * 24 * 60 * 60),
+      timeLimitUnit: normalizedTimeUnit,
+      status: 'IN_PROGRESS',
+      updatedAt: new Date().toISOString(),
+    });
+
+    const updatedRoom = await db.orm.public.Room.where({ id: room.id }).first();
+    const players = await db.orm.public.Player.where({ roomId: room.id }).all();
+    return this.mapRoom(updatedRoom!, players);
+  }
+
   private normalizeDisplayName(value: string | null | undefined, fallback: string): string {
     const trimmed = value?.trim() ?? '';
 
@@ -205,9 +285,36 @@ export class RoomsService {
     return Math.min(Math.max(safeValue, 2), 30);
   }
 
-  private normalizeTimeLimit(value: number | undefined): number {
+  private normalizeTimeUnit(value: string | undefined): TimeUnit {
+    const normalized = typeof value === 'string' ? value.trim().toUpperCase() : 'SECONDS';
+    const validUnits: TimeUnit[] = ['SECONDS', 'MINUTES', 'HOURS', 'DAYS'];
+    return validUnits.includes(normalized as TimeUnit) ? (normalized as TimeUnit) : 'SECONDS';
+  }
+
+  private normalizeTimeAmount(value: number | undefined, fallback = 1): number {
+    const safeValue = typeof value === 'number' && Number.isInteger(value) ? value : fallback;
+    return Math.max(1, safeValue);
+  }
+
+  private normalizeTimeLimit(value: number | undefined, unit: TimeUnit = 'SECONDS'): number {
     const safeValue = typeof value === 'number' && Number.isInteger(value) ? value : 30;
-    return Math.min(Math.max(safeValue, 15), 180);
+    const convertedValue = this.toSeconds(Math.max(1, safeValue), unit);
+    return Math.min(Math.max(convertedValue, 1), 30 * 24 * 60 * 60);
+  }
+
+  private toSeconds(value: number, unit: TimeUnit): number {
+    switch (unit) {
+      case 'SECONDS':
+        return value;
+      case 'MINUTES':
+        return value * 60;
+      case 'HOURS':
+        return value * 60 * 60;
+      case 'DAYS':
+        return value * 24 * 60 * 60;
+      default:
+        return value;
+    }
   }
 
   private normalizeQuestionCount(value: number | undefined, maxAllowed: number): number {
@@ -258,6 +365,7 @@ export class RoomsService {
       status: string;
       maxPlayers: number;
       timeLimit: number;
+      timeLimitUnit?: string;
       questionCount: number;
       currentQuestionIndex: number;
       createdAt: string | Date;
@@ -276,6 +384,7 @@ export class RoomsService {
       status: room.status as RoomStatus,
       maxPlayers: room.maxPlayers,
       timeLimit: Number(room.timeLimit ?? 30),
+      timeLimitUnit: this.normalizeTimeUnit(room.timeLimitUnit ?? 'SECONDS'),
       questionCount: room.questionCount,
       currentQuestionIndex: room.currentQuestionIndex,
       createdAt: new Date(room.createdAt).toISOString(),
