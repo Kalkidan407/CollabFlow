@@ -35,19 +35,13 @@ describe('GamesService', () => {
             }),
           },
           Question: {
-            where: (criteria: any) => ({
-              first: async () => (criteria?.id ? fakeQuestionLookup.get(criteria.id) ?? null : null),
-            }),
-          },
-          GameQuestion: {
             where: () => ({
               all: async () => [
-                { id: 'gq1', roomId: 'room-1', questionId: 'q1', questionOrder: 1 },
-                { id: 'gq2', roomId: 'room-1', questionId: 'q2', questionOrder: 2 },
+                { id: 'q1', text: 'Who would most likely win a karaoke battle?', category: 'fun' },
+                { id: 'q2', text: 'Who is most likely to forget their keys?', category: 'fun' },
               ],
-              deleteAll: async () => undefined,
+              first: async () => fakeQuestionLookup.get('q1') ?? null,
             }),
-            create: async (data: any) => ({ id: 'gq1', ...data }),
           },
           Vote: {
             where: () => ({

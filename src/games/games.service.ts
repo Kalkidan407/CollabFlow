@@ -33,32 +33,20 @@ export class GamesService {
     }
 
     const players = await db.orm.public.Player.where({ roomId: room.id }).all();
-    const gameQuestions = await db.orm.public.GameQuestion.where({ roomId: room.id }).all();
+    const allQuestions = await db.orm.public.Question.where({}).all();
 
-    if (!gameQuestions.length) {
-      throw new Error('No questions available for this game. Add questions to this room before starting.');
+    if (!allQuestions.length) {
+      throw new Error('No questions available for this game. Add questions before starting.');
     }
 
-    const selectedQuestions = (
-      await Promise.all(
-        gameQuestions
-          .sort((a, b) => a.questionOrder - b.questionOrder)
-          .slice(0, room.questionCount || gameQuestions.length)
-          .map(async (gameQuestion) => {
-            const question = await db.orm.public.Question.where({ id: gameQuestion.questionId }).first();
-            if (!question) {
-              return null;
-            }
-
-            return {
-              id: question.id,
-              text: question.text,
-              category: question.category,
-              order: gameQuestion.questionOrder,
-            };
-          }),
-      )
-    ).filter((question): question is NonNullable<typeof question> => Boolean(question));
+    const selectedQuestions = (allQuestions as any[])
+      .slice(0, room.questionCount || allQuestions.length)
+      .map((question: any, index: number) => ({
+        id: question.id,
+        text: question.text,
+        category: question.category,
+        order: index + 1,
+      }));
 
     if (!selectedQuestions.length) {
       throw new Error('No questions available for this game.');
@@ -74,7 +62,7 @@ export class GamesService {
     return {
       roomCode: room.code,
       status: 'IN_PROGRESS',
-      players: players.map((player) => ({
+      players: (players as any[]).map((player: any) => ({
         id: player.id,
         name: player.name,
         isHost: player.isHost,

@@ -1,139 +1,168 @@
-// Room-centric schema for the collaborative final-year project platform
+// use prisma-8
+// Room-centric schema for the collaborative final-year project platform.
+// GameQuestion was removed as part of the simplified room workflow.
 model Room {
-  id              String            @id @default(uuid())
-  code            String            @unique
-  title           String
-  description     String?
-  status          String            @default("IDEATION")
-  teamSize        Int               @default(5)
-  academicYear    String
-  advisorName     String?
-  advisorEmail    String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id                   String          @id @default(uuid())
+  code                 String          @unique
+  title                String
+  description          String?
+  status               String          @default("IDEATION")
+  maxMember            Int             @default(10)
+  timeLimit            Int             @default(30)
+  timeLimitUnit        String          @default("SECONDS")
+  questionCount        Int             @default(0)
+  currentQuestionIndex Int             @default(0)
+  teamSize             Int             @default(5)
+  academicYear         String
+  advisorName          String?
+  advisorEmail         String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @default(now())
 
-  members         RoomMember[]
-  ideas           RoomIdea[]
-  requirements    Requirement[]
-  reviews         AdvisorReview[]
-  sprints         Sprint[]
-  activities      RoomActivity[]
-  documents       RoomDocument[]
+  
+  members              RoomMember[]
+  ideas                RoomIdea[]
+  requirements         Requirement[]
+  reviews              AdvisorReview[]
+  sprints              Sprint[]
+  activities           RoomActivity[]
+  documents            RoomDocument[]
+}
+
+model Members {
+  id       String   @id @default(uuid())
+  roomId   String
+  name     String
+  email    String?
+  role     String   @default("MEMBER")
+  isHost   Boolean  @default(false)
+  joinedAt DateTime @default(now())
+
+  room     Room     @relation(fields:[roomId], references:[id])
+
+  @@unique([roomId, name])
+}
+
+model comments {
+  id        String   @id @default(uuid())
+  text      String
+  category  String   @default("CUSTOM")
+  createdAt DateTime @default(now())
 }
 
 model RoomMember {
-  id          String      @id @default(uuid())
-  roomId      String
-  name        String
-  email       String?
-  role        String      @default("MEMBER")
-  joinedAt    DateTime    @default(now())
+  id       String   @id @default(uuid())
+  roomId   String
+  name     String
+  email    String?
+  role     String   @default("MEMBER")
+  joinedAt DateTime @default(now())
 
-  room        Room        @relation(fields: [roomId], references: [id])
+  room     Room     @relation(fields:[roomId], references:[id])
 
   @@unique([roomId, email])
 }
 
 model RoomIdea {
-  id              String          @id @default(uuid())
-  roomId          String
-  submittedBy     String
-  problem         String
-  solution        String
-  stakeholders    String[]
-  targetUsers     String[]
-  description     String?
-  votes           IdeaVote[]
-  status          String          @default("PENDING")
-  createdAt       DateTime        @default(now())
+  id           String     @id @default(uuid())
+  roomId       String
+  submittedBy  String
+  problem      String
+  solution     String
+  stakeholders String[]
+  targetUsers  String[]
+  description  String?
+  status       String     @default("PENDING")
+  createdAt    DateTime   @default(now())
 
-  room            Room            @relation(fields: [roomId], references: [id])
+  room         Room       @relation(fields:[roomId], references:[id])
+  votes        IdeaVote[]
 }
 
 model IdeaVote {
-  id          String      @id @default(uuid())
-  ideaId      String
-  voterName   String
-  createdAt   DateTime    @default(now())
+  id        String   @id @default(uuid())
+  ideaId    String
+  voterName String
+  createdAt DateTime @default(now())
 
-  idea        RoomIdea    @relation(fields: [ideaId], references: [id])
+  idea      RoomIdea @relation(fields:[ideaId], references:[id])
 
   @@unique([ideaId, voterName])
 }
 
 model AdvisorReview {
-  id            String      @id @default(uuid())
-  roomId        String
-  advisorName   String
-  advisorEmail  String?
-  status        String      @default("PENDING")
-  comments      String?
-  suggestions   String?
-  approvedAt    DateTime?
-  createdAt     DateTime    @default(now())
+  id           String    @id @default(uuid())
+  roomId       String
+  advisorName  String
+  advisorEmail String?
+  status       String    @default("PENDING")
+  comments     String?
+  suggestions  String?
+  approvedAt   DateTime?
+  createdAt    DateTime  @default(now())
 
-  room          Room        @relation(fields: [roomId], references: [id])
+  room         Room      @relation(fields:[roomId], references:[id])
 }
 
 model Requirement {
-  id                  String      @id @default(uuid())
-  roomId              String
-  title               String
-  description         String
-  userStories         String[]
-  acceptanceCriteria  String[]
-  priority            String      @default("MEDIUM")
-  type                String      @default("FUNCTIONAL")
-  createdAt           DateTime    @default(now())
+  id                 String   @id @default(uuid())
+  roomId             String
+  title              String
+  description        String
+  userStories        String[]
+  acceptanceCriteria String[]
+  priority           String   @default("MEDIUM")
+  type               String   @default("FUNCTIONAL")
+  createdAt          DateTime @default(now())
 
-  room                Room        @relation(fields: [roomId], references: [id])
+  room               Room     @relation(fields:[roomId], references:[id])
 }
 
 model Sprint {
-  id          String      @id @default(uuid())
-  roomId      String
-  name        String
-  goal        String?
-  startDate   DateTime?
-  endDate     DateTime?
-  status      String      @default("PLANNED")
-  createdAt   DateTime    @default(now())
+  id        String    @id @default(uuid())
+  roomId    String
+  name      String
+  goal      String?
+  startDate DateTime?
+  endDate   DateTime?
+  status    String    @default("PLANNED")
+  createdAt DateTime  @default(now())
 
-  room        Room        @relation(fields: [roomId], references: [id])
-  tasks       Task[]
+  room      Room      @relation(fields:[roomId], references:[id])
+  tasks     Task[]
 }
 
 model Task {
-  id          String      @id @default(uuid())
+  id          String   @id @default(uuid())
   roomId      String
   sprintId    String?
   title       String
   description String?
   assignee    String?
-  status      String      @default("TODO")
-  priority    String      @default("MEDIUM")
-  createdAt   DateTime    @default(now())
+  status      String   @default("TODO")
+  priority    String   @default("MEDIUM")
+  createdAt   DateTime @default(now())
 
-  sprint      Sprint?     @relation(fields: [sprintId], references: [id])
+  sprint      Sprint?  @relation(fields:[sprintId], references:[id])
 }
 
 model RoomActivity {
-  id          String      @id @default(uuid())
-  roomId      String
-  actor       String
-  action      String
-  details     String?
-  createdAt   DateTime    @default(now())
+  id        String   @id @default(uuid())
+  roomId    String
+  actor     String
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
 
-  room        Room        @relation(fields: [roomId], references: [id])
+  room      Room     @relation(fields:[roomId], references:[id])
 }
 
 model RoomDocument {
-  id          String      @id @default(uuid())
+  id          String   @id @default(uuid())
   roomId      String
   title       String
   content     String
-  generatedAt DateTime    @default(now())
+  generatedAt DateTime @default(now())
 
-  room        Room        @relation(fields: [roomId], references: [id])
+  room        Room     @relation(fields:[roomId], references:[id])
 }
