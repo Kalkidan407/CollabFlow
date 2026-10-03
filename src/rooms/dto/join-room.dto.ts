@@ -8,6 +8,7 @@ export class JoinRoomDto {
     pattern: '^[A-Z2-9]{6}$',
     example: 'AB12CD',
   })
+  
   @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
   @IsString()
   @IsNotEmpty()
@@ -22,8 +23,10 @@ export class JoinRoomDto {
     example: 'Taylor',
     required: false,
   })
+  
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @Length(0, 50)
   name: string;
+
 }

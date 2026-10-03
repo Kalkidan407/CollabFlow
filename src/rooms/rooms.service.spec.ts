@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RoomsService } from './rooms.service.js';
+import { member } from '@prisma/orm-postgres/contract-builder';
 
 describe('RoomsService', () => {
   let service: RoomsService;
@@ -13,9 +14,7 @@ describe('RoomsService', () => {
       title: 'Project Room',
       description: 'Collaboration workspace for project planning and execution.',
       status: 'WAITING',
-      maxPlayers: 10,
-      timeLimit: 30,
-      timeLimitUnit: 'SECONDS',
+      maxMember: 10,
       questionCount: 2,
       currentQuestionIndex: 0,
       academicYear: '2026/27',
@@ -26,12 +25,12 @@ describe('RoomsService', () => {
     };
 
     const rooms: any[] = [roomState];
-    const players: any[] = [{ id: 'player-1', roomId: 'room-1', name: 'Host', isHost: true, joinedAt: new Date() }];
+    const members: any[] = [{ id: 'member-1', roomId: 'room-1', name: 'Host', isHost: true, joinedAt: new Date() }];
     const ideas: any[] = [];
     const requirements: any[] = [];
     const tasks: any[] = [];
     const docs: any[] = [];
-    const activities: any[] = [];
+    
 
     const fakeDb = {
       orm: {
@@ -73,26 +72,24 @@ describe('RoomsService', () => {
               },
             }),
           },
-          Player: {
+          Member: {
             create: async (data: any) => {
-              const existing = players.find(
-                (player) => player.roomId === data.roomId && player.name === data.name,
+              const existing = members.find(
+                (member) => member.roomId === data.roomId && member.name === data.name,
               );
               if (existing) {
                 return existing;
               }
 
-              const created = { id: `player-${Math.random().toString(16).slice(2)}`, joinedAt: new Date(), ...data };
-              players.push(created);
+              const created = { id: `member-${Math.random().toString(16).slice(2)}`, joinedAt: new Date(), ...data };
+              members.push(created);
               return created;
             },
             where: (criteria: any) => ({
-              all: async () => players.filter((player) => (!criteria || !criteria.roomId ? true : player.roomId === criteria.roomId)),
+              all: async () => members.filter((member) => (!criteria || !criteria.roomId ? true : member.roomId === criteria.roomId)),
             }),
           },
-          Question: {
-            create: async (data: any) => ({ id: `q-${Math.random().toString(16).slice(2)}`, ...data, createdAt: new Date() }),
-          },
+    
           RoomIdea: {
             create: async (data: any) => {
               const created = { id: `idea-${Math.random().toString(16).slice(2)}`, createdAt: new Date(), ...data };
@@ -115,6 +112,7 @@ describe('RoomsService', () => {
           IdeaVote: {
             create: async (data: any) => ({ id: `vote-${Math.random().toString(16).slice(2)}`, createdAt: new Date(), ...data }),
           },
+
           Requirement: {
             create: async (data: any) => {
               const created = { id: `req-${Math.random().toString(16).slice(2)}`, ...data };
@@ -123,9 +121,11 @@ describe('RoomsService', () => {
             },
             where: (criteria: any) => ({ all: async () => requirements.filter((entry) => (!criteria || !criteria.roomId ? true : entry.roomId === criteria.roomId)) }),
           },
+
           Sprint: {
             create: async (data: any) => ({ id: `sprint-${Math.random().toString(16).slice(2)}`, ...data }),
           },
+
           Task: {
             create: async (data: any) => {
               const created = { id: `task-${Math.random().toString(16).slice(2)}`, ...data };
@@ -134,9 +134,11 @@ describe('RoomsService', () => {
             },
             where: (criteria: any) => ({ all: async () => tasks.filter((entry) => (!criteria || !criteria.roomId ? true : entry.roomId === criteria.roomId)) }),
           },
+
           AdvisorReview: {
             create: async (data: any) => ({ id: `review-${Math.random().toString(16).slice(2)}`, createdAt: new Date(), ...data }),
           },
+
           RoomDocument: {
             create: async (data: any) => {
               const created = { id: `doc-${Math.random().toString(16).slice(2)}`, generatedAt: new Date(), ...data };
@@ -158,52 +160,8 @@ describe('RoomsService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should create a room without questions', async () => {
-    const room = await service.createRoom('Host');
 
-    expect(room).toMatchObject({
-      timeLimit: 30,
-      players: [{ name: 'Host' }],
-      members: [{ name: 'Host' }],
-    });
-    expect(room.code).toMatch(/^[A-Z0-9]{6}$/);
-  });
 
-  it('should preserve a custom time limit in seconds', async () => {
-    const room = await service.createRoom('Host', { timeLimit: 45 });
-
-    expect(room).toMatchObject({
-      timeLimit: 45,
-    });
-    expect(room.code).toMatch(/^[A-Z0-9]{6}$/);
-  });
-
-  it('should add host-provided questions to an existing room', async () => {
-    await expect(
-      service.addQuestionsToRoom('AB12CD', ['Who would win?', 'Who is most likely to be late?']),
-    ).resolves.toMatchObject({
-      code: 'AB12CD',
-      questionCount: 2,
-    });
-  });
-
-  it('should allow a host to choose a custom question count above 10', async () => {
-    await expect(
-      service.addQuestionsToRoom('AB12CD', Array.from({ length: 12 }, (_, index) => `Question ${index + 1}`), {
-        questionCount: 12,
-      }),
-    ).resolves.toMatchObject({
-      code: 'AB12CD',
-      questionCount: 12,
-    });
-  });
-
-  it('should create a reusable question with a supported category', async () => {
-    await expect(service.createQuestion('Who would win?', 'FUN')).resolves.toMatchObject({
-      text: 'Who would win?',
-      category: 'FUN',
-    });
-  });
 
   it('should allow the host to start the room even before the room is full', async () => {
     await expect(service.startRoom('AB12CD')).resolves.toMatchObject({
@@ -212,53 +170,10 @@ describe('RoomsService', () => {
     });
   });
 
-  it('should remind the host once the room passes half of the time limit', async () => {
-    roomState.status = 'IN_PROGRESS';
-    roomState.updatedAt = new Date(Date.now() - 16_000);
-    roomState.timeLimit = 30;
 
-    await expect(service.checkRoomStatus('AB12CD')).resolves.toMatchObject({
-      code: 'AB12CD',
-      status: 'IN_PROGRESS',
-      reminder: expect.stringContaining('add more time'),
-    });
-  });
+ 
 
-  it('should finish the room automatically when the time limit is reached', async () => {
-    roomState.status = 'IN_PROGRESS';
-    roomState.updatedAt = new Date(Date.now() - 31_000);
-    roomState.timeLimit = 30;
 
-    await expect(service.checkRoomStatus('AB12CD')).resolves.toMatchObject({
-      code: 'AB12CD',
-      status: 'FINISHED',
-    });
-  });
-
-  it('should allow the host to add more time to an in-progress room', async () => {
-    roomState.status = 'IN_PROGRESS';
-    roomState.updatedAt = new Date(Date.now() - 15_000);
-    roomState.timeLimit = 30;
-
-    await expect(service.extendTime('AB12CD', 20)).resolves.toMatchObject({
-      code: 'AB12CD',
-      status: 'IN_PROGRESS',
-      timeLimit: 50,
-    });
-  });
-
-  it('should convert room creation and extension values using the selected time unit', async () => {
-    const created = await service.createRoom('Host', { timeLimit: 2, timeUnit: 'MINUTES' });
-    expect(created).toMatchObject({
-      timeLimit: 120,
-      timeLimitUnit: 'MINUTES',
-    });
-
-    await expect(service.extendTime(created.code, 30, 'SECONDS')).resolves.toMatchObject({
-      timeLimit: 150,
-      timeLimitUnit: 'SECONDS',
-    });
-  });
 
   it('should support the project collaboration workflow inside a room', async () => {
     const room = await service.createProjectRoom({

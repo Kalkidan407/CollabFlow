@@ -34,9 +34,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'4a02761ae49da00fbc8784c26d0fda855da2e6fb43b017fb1dec8bec3e47cc68'>;
+  StorageHashBase<'47748b5e75fe130487a49874a8db368590de0a9be40968489682e54f7ff4048b'>;
 export type ExecutionHash =
-  ExecutionHashBase<'2406a793109bc8a77c632e48929ffbda50c4f9c1809797404c06ac52dbea751d'>;
+  ExecutionHashBase<'50682fa2bf4d5e0771d4ec470c2f538e8bfe67cdd50a7c6da2594aa6c2df2cdf'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -299,15 +299,10 @@ export type FieldOutputTypes = {
       readonly advisorName: CodecTypes['pg/text@1']['output'] | null;
       readonly code: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly currentQuestionIndex: CodecTypes['pg/int4@1']['output'];
       readonly description: CodecTypes['pg/text@1']['output'] | null;
       readonly id: CodecTypes['pg/text@1']['output'];
-      readonly maxMember: CodecTypes['pg/int4@1']['output'];
-      readonly questionCount: CodecTypes['pg/int4@1']['output'];
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly teamSize: CodecTypes['pg/int4@1']['output'];
-      readonly timeLimit: CodecTypes['pg/int4@1']['output'];
-      readonly timeLimitUnit: CodecTypes['pg/text@1']['output'];
       readonly title: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -337,14 +332,6 @@ export type FieldOutputTypes = {
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly submittedBy: CodecTypes['pg/text@1']['output'];
       readonly targetUsers: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
-    };
-    readonly RoomMember: {
-      readonly email: CodecTypes['pg/text@1']['output'] | null;
-      readonly id: CodecTypes['pg/text@1']['output'];
-      readonly joinedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly name: CodecTypes['pg/text@1']['output'];
-      readonly role: CodecTypes['pg/text@1']['output'];
-      readonly roomId: CodecTypes['pg/text@1']['output'];
     };
     readonly Sprint: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -420,15 +407,10 @@ export type FieldInputTypes = {
       readonly advisorName: CodecTypes['pg/text@1']['input'] | null;
       readonly code: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly currentQuestionIndex: CodecTypes['pg/int4@1']['input'];
       readonly description: CodecTypes['pg/text@1']['input'] | null;
       readonly id: CodecTypes['pg/text@1']['input'];
-      readonly maxMember: CodecTypes['pg/int4@1']['input'];
-      readonly questionCount: CodecTypes['pg/int4@1']['input'];
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly teamSize: CodecTypes['pg/int4@1']['input'];
-      readonly timeLimit: CodecTypes['pg/int4@1']['input'];
-      readonly timeLimitUnit: CodecTypes['pg/text@1']['input'];
       readonly title: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -458,14 +440,6 @@ export type FieldInputTypes = {
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly submittedBy: CodecTypes['pg/text@1']['input'];
       readonly targetUsers: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
-    };
-    readonly RoomMember: {
-      readonly email: CodecTypes['pg/text@1']['input'] | null;
-      readonly id: CodecTypes['pg/text@1']['input'];
-      readonly joinedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly name: CodecTypes['pg/text@1']['input'];
-      readonly role: CodecTypes['pg/text@1']['input'];
-      readonly roomId: CodecTypes['pg/text@1']['input'];
     };
     readonly Sprint: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -541,15 +515,10 @@ export type StorageColumnTypes = {
       readonly advisorName: CodecTypes['pg/text@1']['output'] | null;
       readonly code: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly currentQuestionIndex: CodecTypes['pg/int4@1']['output'];
       readonly description: CodecTypes['pg/text@1']['output'] | null;
       readonly id: CodecTypes['pg/text@1']['output'];
-      readonly maxMember: CodecTypes['pg/int4@1']['output'];
-      readonly questionCount: CodecTypes['pg/int4@1']['output'];
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly teamSize: CodecTypes['pg/int4@1']['output'];
-      readonly timeLimit: CodecTypes['pg/int4@1']['output'];
-      readonly timeLimitUnit: CodecTypes['pg/text@1']['output'];
       readonly title: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -579,14 +548,6 @@ export type StorageColumnTypes = {
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly submittedBy: CodecTypes['pg/text@1']['output'];
       readonly targetUsers: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
-    };
-    readonly RoomMember: {
-      readonly email: CodecTypes['pg/text@1']['output'] | null;
-      readonly id: CodecTypes['pg/text@1']['output'];
-      readonly joinedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly name: CodecTypes['pg/text@1']['output'];
-      readonly role: CodecTypes['pg/text@1']['output'];
-      readonly roomId: CodecTypes['pg/text@1']['output'];
     };
     readonly Sprint: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -662,15 +623,10 @@ export type StorageColumnInputTypes = {
       readonly advisorName: CodecTypes['pg/text@1']['input'] | null;
       readonly code: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly currentQuestionIndex: CodecTypes['pg/int4@1']['input'];
       readonly description: CodecTypes['pg/text@1']['input'] | null;
       readonly id: CodecTypes['pg/text@1']['input'];
-      readonly maxMember: CodecTypes['pg/int4@1']['input'];
-      readonly questionCount: CodecTypes['pg/int4@1']['input'];
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly teamSize: CodecTypes['pg/int4@1']['input'];
-      readonly timeLimit: CodecTypes['pg/int4@1']['input'];
-      readonly timeLimitUnit: CodecTypes['pg/text@1']['input'];
       readonly title: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -700,14 +656,6 @@ export type StorageColumnInputTypes = {
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly submittedBy: CodecTypes['pg/text@1']['input'];
       readonly targetUsers: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
-    };
-    readonly RoomMember: {
-      readonly email: CodecTypes['pg/text@1']['input'] | null;
-      readonly id: CodecTypes['pg/text@1']['input'];
-      readonly joinedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly name: CodecTypes['pg/text@1']['input'];
-      readonly role: CodecTypes['pg/text@1']['input'];
-      readonly roomId: CodecTypes['pg/text@1']['input'];
     };
     readonly Sprint: {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -785,21 +733,16 @@ export namespace Models {
     advisorName: CodecTypes['pg/text@1']['output'] | null;
     code: CodecTypes['pg/text@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    currentQuestionIndex: CodecTypes['pg/int4@1']['output'];
     description: CodecTypes['pg/text@1']['output'] | null;
     id: CodecTypes['pg/text@1']['output'];
-    maxMember: CodecTypes['pg/int4@1']['output'];
-    questionCount: CodecTypes['pg/int4@1']['output'];
     status: CodecTypes['pg/text@1']['output'];
     teamSize: CodecTypes['pg/int4@1']['output'];
-    timeLimit: CodecTypes['pg/int4@1']['output'];
-    timeLimitUnit: CodecTypes['pg/text@1']['output'];
     title: CodecTypes['pg/text@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     activities: public_RoomActivity[];
     documents: public_RoomDocument[];
     ideas: public_RoomIdea[];
-    members: public_RoomMember[];
+    members: public_Members[];
     requirements: public_Requirement[];
     reviews: public_AdvisorReview[];
     sprints: public_Sprint[];
@@ -839,16 +782,6 @@ export namespace Models {
     room: public_Room;
     votes: public_IdeaVote[];
     readonly [RelationKeys]?: 'room' | 'votes';
-  };
-  export type public_RoomMember = {
-    email: CodecTypes['pg/text@1']['output'] | null;
-    id: CodecTypes['pg/text@1']['output'];
-    joinedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    name: CodecTypes['pg/text@1']['output'];
-    role: CodecTypes['pg/text@1']['output'];
-    roomId: CodecTypes['pg/text@1']['output'];
-    room: public_Room;
-    readonly [RelationKeys]?: 'room';
   };
   export type public_Sprint = {
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -895,7 +828,6 @@ export declare const models: {
     RoomActivity: Models.public_RoomActivity;
     RoomDocument: Models.public_RoomDocument;
     RoomIdea: Models.public_RoomIdea;
-    RoomMember: Models.public_RoomMember;
     Sprint: Models.public_Sprint;
     Task: Models.public_Task;
     comments: Models.public_comments;
@@ -1262,15 +1194,6 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                 };
-                readonly currentQuestionIndex: {
-                  readonly nativeType: 'int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
-                  };
-                };
                 readonly description: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
@@ -1280,24 +1203,6 @@ type ContractBase = Omit<
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
-                };
-                readonly maxMember: {
-                  readonly nativeType: 'int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/int4@1', 10>;
-                  };
-                };
-                readonly questionCount: {
-                  readonly nativeType: 'int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
-                  };
                 };
                 readonly status: {
                   readonly nativeType: 'text';
@@ -1315,24 +1220,6 @@ type ContractBase = Omit<
                   readonly default: {
                     readonly kind: 'literal';
                     readonly value: DefaultLiteralValue<'pg/int4@1', 5>;
-                  };
-                };
-                readonly timeLimit: {
-                  readonly nativeType: 'int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/int4@1', 30>;
-                  };
-                };
-                readonly timeLimitUnit: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'SECONDS'>;
                   };
                 };
                 readonly title: {
@@ -1548,69 +1435,6 @@ type ContractBase = Omit<
                 },
               ];
             };
-            readonly RoomMember: {
-              columns: {
-                readonly email: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                };
-                readonly id: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                };
-                readonly joinedAt: {
-                  readonly nativeType: 'timestamptz';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                  readonly nullable: false;
-                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
-                };
-                readonly name: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                };
-                readonly role: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'MEMBER'>;
-                  };
-                };
-                readonly roomId: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                };
-              };
-              primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['roomId', 'email'] }];
-              indexes: readonly [
-                {
-                  readonly name: 'RoomMember_roomId_idx_fe51d647';
-                  readonly prefix: 'RoomMember_roomId_idx';
-                  readonly columns: readonly ['roomId'];
-                  readonly unique: false;
-                },
-              ];
-              foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'RoomMember';
-                    readonly columns: readonly ['roomId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'Room';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-              ];
-            };
             readonly Sprint: {
               columns: {
                 readonly createdAt: {
@@ -1797,10 +1621,6 @@ type ContractBase = Omit<
       readonly model: 'RoomDocument';
     };
     readonly RoomIdea: { readonly namespace: 'public' & NamespaceId; readonly model: 'RoomIdea' };
-    readonly RoomMember: {
-      readonly namespace: 'public' & NamespaceId;
-      readonly model: 'RoomMember';
-    };
     readonly Sprint: { readonly namespace: 'public' & NamespaceId; readonly model: 'Sprint' };
     readonly Task: { readonly namespace: 'public' & NamespaceId; readonly model: 'Task' };
     readonly comments: { readonly namespace: 'public' & NamespaceId; readonly model: 'comments' };
@@ -2117,10 +1937,6 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-temporal@1';
                 };
               };
-              readonly currentQuestionIndex: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
               readonly description: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -2129,14 +1945,6 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
-              readonly maxMember: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly questionCount: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
               readonly status: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -2144,14 +1952,6 @@ type ContractBase = Omit<
               readonly teamSize: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly timeLimit: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly timeLimitUnit: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly title: {
                 readonly nullable: false;
@@ -2202,7 +2002,7 @@ type ContractBase = Omit<
               readonly members: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'RoomMember';
+                  readonly model: 'Members';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {
@@ -2253,15 +2053,10 @@ type ContractBase = Omit<
                 readonly advisorName: { readonly column: 'advisorName' };
                 readonly code: { readonly column: 'code' };
                 readonly createdAt: { readonly column: 'createdAt' };
-                readonly currentQuestionIndex: { readonly column: 'currentQuestionIndex' };
                 readonly description: { readonly column: 'description' };
                 readonly id: { readonly column: 'id' };
-                readonly maxMember: { readonly column: 'maxMember' };
-                readonly questionCount: { readonly column: 'questionCount' };
                 readonly status: { readonly column: 'status' };
                 readonly teamSize: { readonly column: 'teamSize' };
-                readonly timeLimit: { readonly column: 'timeLimit' };
-                readonly timeLimitUnit: { readonly column: 'timeLimitUnit' };
                 readonly title: { readonly column: 'title' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
@@ -2454,60 +2249,6 @@ type ContractBase = Omit<
                 readonly status: { readonly column: 'status' };
                 readonly submittedBy: { readonly column: 'submittedBy' };
                 readonly targetUsers: { readonly column: 'targetUsers' };
-              };
-            };
-          };
-          readonly RoomMember: {
-            readonly fields: {
-              readonly email: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly id: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly joinedAt: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-temporal@1';
-                };
-              };
-              readonly name: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly role: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly roomId: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-            };
-            readonly relations: {
-              readonly room: {
-                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Room' };
-                readonly cardinality: 'N:1';
-                readonly nullable: false;
-                readonly on: {
-                  readonly localFields: readonly ['roomId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
-            };
-            readonly storage: {
-              readonly table: 'RoomMember';
-              readonly namespaceId: 'public';
-              readonly fields: {
-                readonly email: { readonly column: 'email' };
-                readonly id: { readonly column: 'id' };
-                readonly joinedAt: { readonly column: 'joinedAt' };
-                readonly name: { readonly column: 'name' };
-                readonly role: { readonly column: 'role' };
-                readonly roomId: { readonly column: 'roomId' };
               };
             };
           };
@@ -2760,14 +2501,6 @@ type ContractBase = Omit<
             readonly column: 'id';
             readonly namespace: 'public';
             readonly table: 'RoomIdea';
-          };
-        },
-        {
-          readonly onCreate: { readonly id: 'uuidv4'; readonly kind: 'generator' };
-          readonly ref: {
-            readonly column: 'id';
-            readonly namespace: 'public';
-            readonly table: 'RoomMember';
           };
         },
         {

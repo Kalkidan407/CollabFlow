@@ -4,14 +4,9 @@
 model Room {
   id                   String          @id @default(uuid())
   code                 String          @unique
-  title                String
+  name                String
   description          String?
   status               String          @default("IDEATION")
-  maxMember            Int             @default(10)
-  timeLimit            Int             @default(30)
-  timeLimitUnit        String          @default("SECONDS")
-  questionCount        Int             @default(0)
-  currentQuestionIndex Int             @default(0)
   teamSize             Int             @default(5)
   academicYear         String
   advisorName          String?
@@ -19,8 +14,7 @@ model Room {
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @default(now())
 
-  
-  members              RoomMember[]
+  members              Members[]
   ideas                RoomIdea[]
   requirements         Requirement[]
   reviews              AdvisorReview[]
@@ -50,18 +44,7 @@ model comments {
   createdAt DateTime @default(now())
 }
 
-model RoomMember {
-  id       String   @id @default(uuid())
-  roomId   String
-  name     String
-  email    String?
-  role     String   @default("MEMBER")
-  joinedAt DateTime @default(now())
 
-  room     Room     @relation(fields:[roomId], references:[id])
-
-  @@unique([roomId, email])
-}
 
 model RoomIdea {
   id           String     @id @default(uuid())

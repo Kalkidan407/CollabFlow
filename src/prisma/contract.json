@@ -36,10 +36,6 @@
       "model": "RoomIdea",
       "namespace": "public"
     },
-    "RoomMember": {
-      "model": "RoomMember",
-      "namespace": "public"
-    },
     "Sprint": {
       "model": "Sprint",
       "namespace": "public"
@@ -498,13 +494,6 @@
                   "kind": "scalar"
                 }
               },
-              "currentQuestionIndex": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "description": {
                 "nullable": true,
                 "type": {
@@ -519,20 +508,6 @@
                   "kind": "scalar"
                 }
               },
-              "maxMember": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "questionCount": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "status": {
                 "nullable": false,
                 "type": {
@@ -544,20 +519,6 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "timeLimit": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "timeLimitUnit": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -633,7 +594,7 @@
                   ]
                 },
                 "to": {
-                  "model": "RoomMember",
+                  "model": "Members",
                   "namespace": "public"
                 }
               },
@@ -700,32 +661,17 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
-                "currentQuestionIndex": {
-                  "column": "currentQuestionIndex"
-                },
                 "description": {
                   "column": "description"
                 },
                 "id": {
                   "column": "id"
                 },
-                "maxMember": {
-                  "column": "maxMember"
-                },
-                "questionCount": {
-                  "column": "questionCount"
-                },
                 "status": {
                   "column": "status"
                 },
                 "teamSize": {
                   "column": "teamSize"
-                },
-                "timeLimit": {
-                  "column": "timeLimit"
-                },
-                "timeLimitUnit": {
-                  "column": "timeLimitUnit"
                 },
                 "title": {
                   "column": "title"
@@ -1047,94 +993,6 @@
               },
               "namespaceId": "public",
               "table": "RoomIdea"
-            }
-          },
-          "RoomMember": {
-            "fields": {
-              "email": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "joinedAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "name": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "role": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "roomId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              }
-            },
-            "relations": {
-              "room": {
-                "cardinality": "N:1",
-                "nullable": false,
-                "on": {
-                  "localFields": [
-                    "roomId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "Room",
-                  "namespace": "public"
-                }
-              }
-            },
-            "storage": {
-              "fields": {
-                "email": {
-                  "column": "email"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "joinedAt": {
-                  "column": "joinedAt"
-                },
-                "name": {
-                  "column": "name"
-                },
-                "role": {
-                  "column": "role"
-                },
-                "roomId": {
-                  "column": "roomId"
-                }
-              },
-              "namespaceId": "public",
-              "table": "RoomMember"
             }
           },
           "Sprint": {
@@ -1830,15 +1688,6 @@
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
-                "currentQuestionIndex": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": 0
-                  },
-                  "nativeType": "int4",
-                  "nullable": false
-                },
                 "description": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -1847,24 +1696,6 @@
                 "id": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": false
-                },
-                "maxMember": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": 10
-                  },
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "questionCount": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": 0
-                  },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "status": {
@@ -1883,24 +1714,6 @@
                     "value": 5
                   },
                   "nativeType": "int4",
-                  "nullable": false
-                },
-                "timeLimit": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": 30
-                  },
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "timeLimitUnit": {
-                  "codecId": "pg/text@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": "SECONDS"
-                  },
-                  "nativeType": "text",
                   "nullable": false
                 },
                 "title": {
@@ -2182,89 +1995,6 @@
               },
               "uniques": []
             },
-            "RoomMember": {
-              "columns": {
-                "email": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
-                },
-                "id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "joinedAt": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "name": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "role": {
-                  "codecId": "pg/text@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": "MEMBER"
-                  },
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "roomId": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                }
-              },
-              "foreignKeys": [
-                {
-                  "source": {
-                    "columns": [
-                      "roomId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "RoomMember"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "Room"
-                  }
-                }
-              ],
-              "indexes": [
-                {
-                  "columns": [
-                    "roomId"
-                  ],
-                  "name": "RoomMember_roomId_idx_fe51d647",
-                  "prefix": "RoomMember_roomId_idx",
-                  "unique": false
-                }
-              ],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": [
-                {
-                  "columns": [
-                    "roomId",
-                    "email"
-                  ]
-                }
-              ]
-            },
             "Sprint": {
               "columns": {
                 "createdAt": {
@@ -2492,10 +2222,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4a02761ae49da00fbc8784c26d0fda855da2e6fb43b017fb1dec8bec3e47cc68"
+    "storageHash": "47748b5e75fe130487a49874a8db368590de0a9be40968489682e54f7ff4048b"
   },
   "execution": {
-    "executionHash": "2406a793109bc8a77c632e48929ffbda50c4f9c1809797404c06ac52dbea751d",
+    "executionHash": "50682fa2bf4d5e0771d4ec470c2f538e8bfe67cdd50a7c6da2594aa6c2df2cdf",
     "mutations": {
       "defaults": [
         {
@@ -2595,17 +2325,6 @@
             "column": "id",
             "namespace": "public",
             "table": "RoomIdea"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "column": "id",
-            "namespace": "public",
-            "table": "RoomMember"
           }
         },
         {
