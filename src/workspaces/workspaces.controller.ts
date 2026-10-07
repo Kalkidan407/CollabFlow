@@ -1,0 +1,88 @@
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { WorkspacesService, type ProjectWorkspaceRecord } from './workspaces.service.js';
+import type { CreateProjectInput } from '../projects/projects.service.js';
+
+@ApiTags('workspaces')
+@Controller('workspaces')
+export class WorkspacesController {
+  constructor(private readonly workspacesService: WorkspacesService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List all specification workspaces' })
+  @ApiResponse({ status: 200, description: 'Workspaces returned successfully.' })
+  async listWorkspaces(): Promise<ProjectWorkspaceRecord[]> {
+    return this.workspacesService.listWorkspaces();
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Create a new project workspace for a specification-first workflow' })
+  @ApiResponse({ status: 201, description: 'Workspace created successfully.' })
+  @ApiBody({
+    schema: {
+      example: {
+        title: 'SpecFlow',
+        description: 'Architecture and implementation review workspace.',
+        repositoryUrl: 'https://github.com/acme/specflow',
+        defaultBranch: 'main',
+        overview: 'The product captures software specifications and checks repository implementation against them.',
+        goals: ['Document product intent', 'Compare implementation to the spec'],
+        requirements: ['Import or draft a spec', 'Connect the Git repo', 'Share for review'],
+        architecture: 'Document-first workflow with mismatch detection and review handoff.',
+        acceptanceCriteria: ['A report highlights drift', 'Stakeholders can review the project'],
+      },
+    },
+  })
+  async createProjectWorkspace(@Body() body: any): Promise<ProjectWorkspaceRecord> {
+    return this.workspacesService.createProjectWorkspace(body);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Fetch a workspace and all the project records attached to it' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiResponse({ status: 200, description: 'Workspace retrieved successfully.' })
+  async getWorkspace(@Param('id') id: string): Promise<ProjectWorkspaceRecord> {
+    return this.workspacesService.getWorkspace(id);
+  }
+
+  @Post(':id/projects')
+  @ApiOperation({ summary: 'Create a project inside an existing workspace' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiResponse({ status: 201, description: 'Project created inside the workspace.' })
+  async createProjectInWorkspace(@Param('id') id: string, @Body() body: CreateProjectInput) {
+    return this.workspacesService.createProjectInWorkspace(id, body);
+  }
+
+  @Post(':id/specification')
+  @ApiOperation({ summary: 'Import or update the project specification' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiResponse({ status: 200, description: 'Specification imported successfully.' })
+  async importSpecification(@Param('id') id: string, @Body() body: any) {
+    return this.workspacesService.importSpecification(id, body);
+  }
+
+  @Post(':id/repository')
+  @ApiOperation({ summary: 'Connect a Git repository to the workspace for validation' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiResponse({ status: 200, description: 'Repository connected successfully.' })
+  async connectRepository(@Param('id') id: string, @Body() body: any) {
+    return this.workspacesService.connectRepository(id, body);
+  }
+
+  @Post(':id/check')
+  @ApiOperation({ summary: 'Compare the repository implementation against the written specification' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiResponse({ status: 200, description: 'Implementation review completed.' })
+  async checkImplementation(@Param('id') id: string, @Body() body: { files?: string[]; context?: string }) {
+    return this.workspacesService.checkImplementationAgainstSpec(id, body.files ?? [], body.context ?? '');
+  }
+
+  @Post(':id/review')
+  @ApiOperation({ summary: 'Share the workspace for review' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiResponse({ status: 200, description: 'Review link generated successfully.' })
+  async shareProjectForReview(@Param('id') id: string, @Body('reviewer') reviewer: string) {
+    return this.workspacesService.shareProjectForReview(id, reviewer ?? 'Product team');
+  }
+}
+

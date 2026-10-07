@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { RoomsService } from './rooms.service.js';
-import { member } from '@prisma/orm-postgres/contract-builder';
+import { PrismaService } from '../src/prisma/prisma.service.js';
+import { RoomsService } from '../src/rooms/rooms.service.js';
 
 describe('RoomsService', () => {
   let service: RoomsService;
@@ -14,9 +13,7 @@ describe('RoomsService', () => {
       title: 'Project Room',
       description: 'Collaboration workspace for project planning and execution.',
       status: 'WAITING',
-      maxMember: 10,
-      questionCount: 2,
-      currentQuestionIndex: 0,
+      teamSize: 10,
       academicYear: '2026/27',
       advisorName: 'Advisor',
       advisorEmail: 'advisor@university.edu',
@@ -25,12 +22,15 @@ describe('RoomsService', () => {
     };
 
     const rooms: any[] = [roomState];
-    const members: any[] = [{ id: 'member-1', roomId: 'room-1', name: 'Host', isHost: true, joinedAt: new Date() }];
+    const members: any[] = [{ id: 'member-1', 
+                              roomId: 'room-1', 
+                              name: 'Host', 
+                              isHost: true, 
+                              joinedAt: new Date() }];
     const ideas: any[] = [];
     const requirements: any[] = [];
     const tasks: any[] = [];
     const docs: any[] = [];
-    
 
     const fakeDb = {
       orm: {
@@ -174,6 +174,28 @@ describe('RoomsService', () => {
  
 
 
+
+  it('should persist the new room metadata fields for the product lifecycle workflow', async () => {
+    const room = await service.createProjectRoom({
+      title: 'Delivery Platform',
+      description: 'A shared product workspace for the team.',
+      teamSize: 5,
+      academicYear: '2026/27',
+      advisorName: 'Dr. Abebe',
+      advisorEmail: 'abebe@university.edu',
+      hostName: 'Alem',
+      history: 'Discovery and sprint delivery history',
+      srcDoc: 'Requirements and source documents',
+      sof: 'System overview and feature map',
+    });
+
+    expect(room).toMatchObject({
+      title: 'Delivery Platform',
+      history: 'Discovery and sprint delivery history',
+      srcDoc: 'Requirements and source documents',
+      sof: 'System overview and feature map',
+    });
+  });
 
   it('should support the project collaboration workflow inside a room', async () => {
     const room = await service.createProjectRoom({

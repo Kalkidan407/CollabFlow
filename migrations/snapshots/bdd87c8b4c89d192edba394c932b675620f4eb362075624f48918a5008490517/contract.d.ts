@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'2c719dd58ad1cb0b53b9828ec9e3a6e3cd9a83aeec9117d3c9f2e027c3cce651'>;
+  StorageHashBase<'bdd87c8b4c89d192edba394c932b675620f4eb362075624f48918a5008490517'>;
 export type ExecutionHash =
   ExecutionHashBase<'ce0c431fe3e899009afb217d654f8623fa963ee3e55f4a3e29b2c32c83c5a95e'>;
 export type ProfileHash =
@@ -309,7 +309,6 @@ export type FieldOutputTypes = {
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly title: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly workspaceId: CodecTypes['pg/text@1']['output'] | null;
     };
     readonly ProjectDocument: {
       readonly content: CodecTypes['pg/text@1']['output'];
@@ -543,7 +542,6 @@ export type FieldInputTypes = {
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly title: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly workspaceId: CodecTypes['pg/text@1']['input'] | null;
     };
     readonly ProjectDocument: {
       readonly content: CodecTypes['pg/text@1']['input'];
@@ -777,7 +775,6 @@ export type StorageColumnTypes = {
       readonly status: CodecTypes['pg/text@1']['output'];
       readonly title: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-      readonly workspaceId: CodecTypes['pg/text@1']['output'] | null;
     };
     readonly ProjectDocument: {
       readonly content: CodecTypes['pg/text@1']['output'];
@@ -1011,7 +1008,6 @@ export type StorageColumnInputTypes = {
       readonly status: CodecTypes['pg/text@1']['input'];
       readonly title: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
-      readonly workspaceId: CodecTypes['pg/text@1']['input'] | null;
     };
     readonly ProjectDocument: {
       readonly content: CodecTypes['pg/text@1']['input'];
@@ -1261,15 +1257,13 @@ export namespace Models {
     status: CodecTypes['pg/text@1']['output'];
     title: CodecTypes['pg/text@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    workspaceId: CodecTypes['pg/text@1']['output'] | null;
     documents: public_ProjectDocument[];
     mismatches: public_SpecificationMismatch[];
     repository: public_RepositoryConnection | null;
     reviews: public_ProjectReview[];
     specification: public_Specification | null;
-    workspace: public_Workspace | null;
     readonly [RelationKeys]?:
-      'documents' | 'mismatches' | 'repository' | 'reviews' | 'specification' | 'workspace';
+      'documents' | 'mismatches' | 'repository' | 'reviews' | 'specification';
   };
   export type public_ProjectDocument = {
     content: CodecTypes['pg/text@1']['output'];
@@ -1458,11 +1452,10 @@ export namespace Models {
     status: CodecTypes['pg/text@1']['output'];
     title: CodecTypes['pg/text@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
-    projects: public_Project[];
     repository: public_WorkspaceRepository | null;
     reviews: public_WorkspaceReview[];
     specification: public_WorkspaceSpecification | null;
-    readonly [RelationKeys]?: 'projects' | 'repository' | 'reviews' | 'specification';
+    readonly [RelationKeys]?: 'repository' | 'reviews' | 'specification';
   };
   export type public_WorkspaceRepository = {
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -1958,36 +1951,11 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
                 };
-                readonly workspaceId: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                };
               };
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [];
-              indexes: readonly [
-                {
-                  readonly name: 'Project_workspaceId_idx_ba65f874';
-                  readonly prefix: 'Project_workspaceId_idx';
-                  readonly columns: readonly ['workspaceId'];
-                  readonly unique: false;
-                },
-              ];
-              foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'Project';
-                    readonly columns: readonly ['workspaceId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'Workspace';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-              ];
+              indexes: readonly [];
+              foreignKeys: readonly [];
             };
             readonly ProjectDocument: {
               columns: {
@@ -3725,10 +3693,6 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-temporal@1';
                 };
               };
-              readonly workspaceId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
             };
             readonly relations: {
               readonly documents: {
@@ -3788,18 +3752,6 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['projectId'];
                 };
               };
-              readonly workspace: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Workspace';
-                };
-                readonly cardinality: 'N:1';
-                readonly nullable: true;
-                readonly on: {
-                  readonly localFields: readonly ['workspaceId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
             };
             readonly storage: {
               readonly table: 'Project';
@@ -3814,7 +3766,6 @@ type ContractBase = Omit<
                 readonly status: { readonly column: 'status' };
                 readonly title: { readonly column: 'title' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
-                readonly workspaceId: { readonly column: 'workspaceId' };
               };
             };
           };
@@ -4913,17 +4864,6 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
-              readonly projects: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Project';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['workspaceId'];
-                };
-              };
               readonly repository: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;

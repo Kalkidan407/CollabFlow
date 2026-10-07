@@ -2,124 +2,79 @@
 
 export class User {
   id: string;
-  googleId?: string;
-  email: string;
   name: string;
-  avatarUrl?: string;
-  bio?: string;
+  roomCode?: string;
+  projectId?: string;
+  roomId?: string;
+  role: string;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export class Advisor {
-  id: string;
-  name: string;
-  email: string;
-  department?: string;
-  createdAt: Date;
-}
-
-export class ProjectMember {
-  id: string;
-  projectId: string;
-  userId: string;
-  role: string;
-  joinedAt: Date;
 }
 
 export class Project {
   id: string;
   title: string;
   description?: string;
-  teamSize: number;
-  academicYear: string;
-  status: 'IDEATION' | 'VOTING' | 'ADVISOR_REVIEW' | 'APPROVED' | 'PLANNING' | 'IN_PROGRESS' | 'TESTING' | 'LAUNCHED';
-  advisorId?: string;
-  advisor?: Advisor;
+  status: 'IDEATION' | 'ACTIVE' | 'APPROVED' | 'IN_PROGRESS' | 'TESTING' | 'MAINTENANCE';
   createdAt: Date;
   updatedAt: Date;
 }
 
-export class ProjectIdea {
+export class Room {
   id: string;
-  projectId: string;
-  submittedById: string;
-  title?: string;
-  problem: string;
-  solution: string;
-  stakeholders: string[];
-  targetUsers: string[];
-  description?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  createdAt: Date;
-}
-
-export class IdeaVote {
-  id: string;
-  ideaId: string;
-  voterId: string;
-  createdAt: Date;
-}
-
-export class AdvisorReview {
-  id: string;
-  projectId: string;
-  advisorId: string;
-  status: 'PENDING' | 'APPROVED' | 'CHANGES_REQUESTED';
-  comments?: string;
-  suggestions?: string;
-  approvedAt?: Date;
-  createdAt: Date;
-}
-
-export class Requirement {
-  id: string;
-  projectId: string;
+  code: string;
   title: string;
-  description: string;
-  userStories: string[];
-  acceptanceCriteria: string[];
-  priority: 'LOW' | 'MEDIUM' | 'HIGH';
-  type: 'FUNCTIONAL' | 'NON_FUNCTIONAL';
+  description?: string;
+  history?: string;
+  srcDoc?: string;
+  sof?: string;
+  status: 'WAITING' | 'IDEATION' | 'IN_PROGRESS' | 'APPROVED' | 'FINISHED';
+  projectId?: string;
   createdAt: Date;
-}
-
-export class Sprint {
-  id: string;
-  projectId: string;
-  name: string;
-  goal?: string;
-  startDate?: Date;
-  endDate?: Date;
-  status: 'PLANNED' | 'ACTIVE' | 'COMPLETED';
-  createdAt: Date;
+  updatedAt: Date;
 }
 
 export class Task {
   id: string;
-  sprintId?: string;
+  roomId: string;
   projectId?: string;
   title: string;
   description?: string;
   assigneeId?: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE';
+  assignerId?: string;
+  status: 'ONGOING' | 'FINISHED' | 'REVIEW' | 'BLOCKED';
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
   createdAt: Date;
 }
 
-export class ProjectActivity {
+export class Comment {
   id: string;
-  projectId: string;
-  actor: string;
-  action: string;
-  details?: string;
+  userId: string;
+  roomId?: string;
+  taskId?: string;
+  comment: string;
+  reply?: string;
   createdAt: Date;
 }
 
-export class ProjectDocument {
+export class Schedule {
   id: string;
-  projectId: string;
+  roomId: string;
   title: string;
-  content: string;
-  generatedAt: Date;
+  sprintName?: string;
+  timeline?: string;
+  startAt?: Date;
+  endAt?: Date;
+  status: 'PLANNED' | 'ACTIVE' | 'COMPLETED';
+  createdAt: Date;
+}
+
+export class LifecycleStage {
+  id: string;
+  roomId: string;
+  name: 'USE_CASE' | 'REQUIREMENTS' | 'USER_STORIES' | 'PRODUCT_BACKLOG' | 'SYSTEM_DESIGN' | 'SPRINT_PLANNING' | 'DEVELOPMENT' | 'TESTING' | 'REVIEW' | 'DEPLOYMENT' | 'MAINTENANCE';
+  order: number;
+  status: 'PENDING' | 'ACTIVE' | 'DONE';
+  notes?: string;
+  createdAt: Date;
 }

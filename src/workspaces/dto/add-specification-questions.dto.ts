@@ -2,11 +2,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { ArrayNotEmpty, IsArray, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
-export class AddQuestionsDto {
+export class AddSpecificationQuestionsDto {
   @ApiProperty({
-    description: 'Questions the host wants to add to the room.',
+    description: 'Questions or prompts the team wants to add to the specification review.',
     type: [String],
-    example: ['Who would win?', 'Who is most likely to be late?'],
+    example: ['What problem are we solving?', 'Which APIs are in scope?'],
     minItems: 1,
     maxItems: 20,
   })
@@ -22,7 +22,7 @@ export class AddQuestionsDto {
   questions: string[];
 
   @ApiPropertyOptional({
-    description: 'How many questions should be used when the game starts. This value is capped only by the actual number of questions already added to the room.',
+    description: 'How many specification questions should be used for review.',
     minimum: 1,
     example: 5,
   })

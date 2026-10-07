@@ -1,223 +1,141 @@
-# CollabFlow
+# SpecFlow
 
-CollabFlow is a collaborative software-engineering platform designed for final-year computer science and software engineering students. The platform helps student teams manage the full software development lifecycle from problem discovery through project approval, sprint planning, implementation, testing, and final documentation.
+SpecFlow is a specification-first engineering tool for teams that want to define software requirements clearly, import existing documentation when it already exists, and compare the written spec against the actual repository implementation.
 
-The system supports team collaboration, advisor review, structured project history, and documentation generation in a single workflow.
+The system helps teams turn product intent into structured documentation, connect that document to a Git repository, and highlight architecture or requirement mismatches before the implementation drifts too far.
 
 ## Product Vision
 
-Students working on final-year projects often struggle with:
+Engineering teams often struggle with:
 
-* unclear project discovery and idea validation
-* poor coordination among team members
-* weak communication with advisors
-* lack of sprint planning and progress tracking
-* inconsistent documentation and final deliverables
+* vague product requirements and architecture documents
+* docs that do not match the codebase
+* manual review loops that slow delivery
+* no simple way to compare implementation against the original specification
 
-CollabFlow solves these problems by guiding project teams through a structured lifecycle, while enabling advisors to review progress, provide feedback, and approve milestones.
+SpecFlow solves these problems by providing a document-driven workflow: create a project, draft or import a specification, connect the Git repository, and review repository mismatch reports before shipping.
 
 ## Core Features
 
-* Google sign-in and user profile management
-* Project creation and team membership setup
-* Invitation flow for team members and advisors
-* Problem discovery and idea submission
-* Stakeholder and target-user analysis
-* Team discussion and voting on project ideas
-* Advisor review, comments, and approval workflow
-* Requirement definition with user stories and acceptance criteria
-* Product backlog and sprint planning
-* Task assignment and team-role breakdown
-* Progress tracking for design, frontend, backend, QA, and documentation work
-* Project activity and decisions history
-* Documentation generation for software project drafts
-* Testing and launch milestone tracking
+* Create a project as a specification workspace
+* Draft a software specification in the app
+* Import an existing doc or requirements file
+* Connect the project to a Git repository
+* Compare implementation against written product intent
+* Highlight architecture and requirement mismatches
+* Share the project for review with a public review link
+* Export the specification as a generated documentation draft
 
 ## Main User Flow
 
 ```text
 Create Project
      ↓
-Invite Team Members + Advisor
+Write or Import Specification
      ↓
-Submit Project Ideas
+Connect Git Repository
      ↓
-Discuss, Review, and Vote
+Check Implementation Against Spec
      ↓
-Send Approved Idea to Advisor
+Review Mismatch Report
      ↓
-Advisor Comments / Approval / Changes Requested
+Share for Review
      ↓
-Requirements and Planning
-     ↓
-Sprint Setup and Task Assignment
-     ↓
-Implementation and Team Execution
-     ↓
-Testing and Validation
-     ↓
-Documentation Generation
-     ↓
-Launch / Final Project Milestone
+Align Code and Documentation
 ```
 
 ## Main Entities
 
-### User
-Represents a team member or advisor in the system.
-
-Fields include:
-
-* id
-* name
-* email
-* googleId
-* avatarUrl
-* bio
-* createdAt
-* updatedAt
-
 ### Project
-Represents a final-year software project.
+Represents a specification workspace and source of truth for a product or initiative.
 
 Fields include:
 
 * id
 * title
 * description
-* teamSize
-* academicYear
 * status
-* advisor
-* members
+* repositoryUrl
+* defaultBranch
+* specification
 * createdAt
 * updatedAt
 
-### Advisor
-Represents the project supervisor or reviewer.
+### Specification
+Represents the written product and architecture intent.
 
 Fields include:
 
-* id
-* name
-* email
-* department
-* reviews
+* overview
+* goals
+* nonGoals
+* requirements
+* architecture
+* acceptanceCriteria
 
-### ProjectIdea
-Represents a proposed solution or problem statement submitted by a student team.
+### RepositoryConnection
+Represents the Git repo that will be validated against the specification.
 
 Fields include:
 
-* id
-* problem
-* solution
-* stakeholders
-* targetUsers
-* submittedBy
-* votes
+* provider
+* url
+* defaultBranch
+* lastSyncedAt
+
+### ProjectReview
+Represents a shareable review snapshot for stakeholders.
+
+Fields include:
+
+* reviewer
+* summary
 * status
+* shareUrl
 * createdAt
 
-### Requirement
-Represents requirements for the project workflow.
+### SpecificationMismatch
+Represents a configuration, requirement, or implementation gap discovered during validation.
 
 Fields include:
 
-* id
-* title
-* description
-* userStories
-* acceptanceCriteria
-* priority
-* type
-
-### Sprint
-Represents an iteration or milestone stage in the project timeline.
-
-Fields include:
-
-* id
-* name
-* goal
-* startDate
-* endDate
-* status
-* tasks
-
-### Task
-Represents a unit of work assigned to a team member or team.
-
-Fields include:
-
-* id
-* title
-* description
-* assignee
-* status
-* priority
-
-### ProjectDocument
-Represents generated documentation based on project activity and development history.
-
-Fields include:
-
-* id
-* title
-* content
-* generatedAt
-
-## System Roles
-
-The platform supports multiple roles within a project, including:
-
-* Team member
-* Team lead
-* Frontend developer
-* Backend developer
-* Designer
-* Tester
-* Quality controller
-* Documentation lead
-* Advisor
-
-These roles help the team work in parallel and keep each member focused on the correct part of the lifecycle.
+* category
+* severity
+* message
+* filePath
 
 ## Architecture
 
 ```text
-Client App
+Web App / API
    │
    ▼
 NestJS API
    │
-   ├── Auth Module
    ├── Project Module
-   ├── Idea and Voting Module
-   ├── Advisor Review Module
-   ├── Planning Module
-   ├── Sprint and Task Module
-   ├── Activity History Module
-   └── Documentation Module
+   ├── Specification Module
+   ├── Repository Sync Module
+   ├── Validation / Mismatch Checker
+   └── Review Sharing Module
    │
    ▼
-PostgreSQL Database
-   │
-   ▼
-Prisma ORM
+Prisma + Postgres
 ```
 
 ## Technology Stack
 
-**Frontend**
-
-* Next.js
-* TypeScript
-* Tailwind CSS
-
 **Backend**
 
 * NestJS
+* TypeScript
+* Prisma
+* PostgreSQL
+
+**Future UI**
+
+* Next.js
+* React
+* VS Code extension for in-editor spec validation
 * TypeScript
 * REST API
 * Swagger

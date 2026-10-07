@@ -1,151 +1,403 @@
 // use prisma-8
-// Room-centric schema for the collaborative final-year project platform.
-// GameQuestion was removed as part of the simplified room workflow.
-model Room {
-  id                   String          @id @default(uuid())
-  code                 String          @unique
-  name                String
-  description          String?
-  status               String          @default("IDEATION")
-  teamSize             Int             @default(5)
-  academicYear         String
-  advisorName          String?
-  advisorEmail         String?
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @default(now())
 
-  members              Members[]
-  ideas                RoomIdea[]
-  requirements         Requirement[]
-  reviews              AdvisorReview[]
-  sprints              Sprint[]
-  activities           RoomActivity[]
-  documents            RoomDocument[]
+model Project {
+  id             String   @id @default(uuid())
+  workspaceId    String?
+  title          String
+  description    String?
+  status         String
+  repositoryUrl  String?
+  defaultBranch  String?
+  source         String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+
+  workspace      Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  specification  Specification?
+  repository     RepositoryConnection?
+  documents      ProjectDocument[]
+  reviews        ProjectReview[]
+  mismatches     SpecificationMismatch[]
 }
 
-model Members {
-  id       String   @id @default(uuid())
-  roomId   String
-  name     String
-  email    String?
-  role     String   @default("MEMBER")
-  isHost   Boolean  @default(false)
-  joinedAt DateTime @default(now())
+model Workspace {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  status        String
+  source        String   @default("draft")
+  repositoryUrl String?
+  defaultBranch String?
+  reviewStatus  String?
+  shareUrl      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
 
-  room     Room     @relation(fields:[roomId], references:[id])
-
-  @@unique([roomId, name])
+  projects      Project[]
+  specification WorkspaceSpecification?
+  repository    WorkspaceRepository?
+  reviews       WorkspaceReview[]
 }
 
-model comments {
-  id        String   @id @default(uuid())
-  text      String
-  category  String   @default("CUSTOM")
-  createdAt DateTime @default(now())
-}
-
-
-
-model RoomIdea {
-  id           String     @id @default(uuid())
-  roomId       String
-  submittedBy  String
-  problem      String
-  solution     String
-  stakeholders String[]
-  targetUsers  String[]
-  description  String?
-  status       String     @default("PENDING")
-  createdAt    DateTime   @default(now())
-
-  room         Room       @relation(fields:[roomId], references:[id])
-  votes        IdeaVote[]
-}
-
-model IdeaVote {
-  id        String   @id @default(uuid())
-  ideaId    String
-  voterName String
-  createdAt DateTime @default(now())
-
-  idea      RoomIdea @relation(fields:[ideaId], references:[id])
-
-  @@unique([ideaId, voterName])
-}
-
-model AdvisorReview {
-  id           String    @id @default(uuid())
-  roomId       String
-  advisorName  String
-  advisorEmail String?
-  status       String    @default("PENDING")
-  comments     String?
-  suggestions  String?
-  approvedAt   DateTime?
-  createdAt    DateTime  @default(now())
-
-  room         Room      @relation(fields:[roomId], references:[id])
-}
-
-model Requirement {
-  id                 String   @id @default(uuid())
-  roomId             String
-  title              String
-  description        String
-  userStories        String[]
+model WorkspaceSpecification {
+  id                String   @id @default(uuid())
+  workspaceId       String   @unique
+  overview          String
+  goals             String[]
+  nonGoals          String[]
+  requirements      String[]
+  architecture      String?
   acceptanceCriteria String[]
-  priority           String   @default("MEDIUM")
-  type               String   @default("FUNCTIONAL")
-  createdAt          DateTime @default(now())
+  importedFrom      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
 
-  room               Room     @relation(fields:[roomId], references:[id])
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
-model Sprint {
-  id        String    @id @default(uuid())
-  roomId    String
-  name      String
-  goal      String?
-  startDate DateTime?
-  endDate   DateTime?
-  status    String    @default("PLANNED")
-  createdAt DateTime  @default(now())
+model WorkspaceRepository {
+  id            String    @id @default(uuid())
+  workspaceId   String    @unique
+  provider      String
+  url           String
+  defaultBranch String?
+  lastSyncedAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now())
 
-  room      Room      @relation(fields:[roomId], references:[id])
-  tasks     Task[]
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
-model Task {
-  id          String   @id @default(uuid())
-  roomId      String
-  sprintId    String?
-  title       String
-  description String?
-  assignee    String?
-  status      String   @default("TODO")
-  priority    String   @default("MEDIUM")
-  createdAt   DateTime @default(now())
-
-  sprint      Sprint?  @relation(fields:[sprintId], references:[id])
-}
-
-model RoomActivity {
+model WorkspaceReview {
   id        String   @id @default(uuid())
-  roomId    String
-  actor     String
-  action    String
-  details   String?
+  workspaceId String
+  reviewer  String
+  summary   String?
+  status    String
+  shareUrl  String?
   createdAt DateTime @default(now())
 
-  room      Room     @relation(fields:[roomId], references:[id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
 
-model RoomDocument {
-  id          String   @id @default(uuid())
-  roomId      String
+model Specification {
+  id                String   @id @default(uuid())
+  projectId         String   @unique
+  overview          String
+  goals             String[]
+  nonGoals          String[]
+  requirements      String[]
+  architecture      String?
+  acceptanceCriteria String[]
+  importedFrom      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+
+  project           Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectDocument {
+  id        String   @id @default(uuid())
+  projectId String
+  title     String
+  type      String
+  source    String
+  content   String
+  createdAt DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model RepositoryConnection {
+  id            String    @id @default(uuid())
+  projectId     String    @unique
+  provider      String
+  url           String
+  defaultBranch String?
+  lastSyncedAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now())
+
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectReview {
+  id        String   @id @default(uuid())
+  projectId String
+  reviewer  String
+  summary   String?
+  status    String
+  shareUrl  String?
+  createdAt DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model SpecificationMismatch {
+  id        String   @id @default(uuid())
+  projectId String
+  category  String
+  severity  String
+  message   String
+  filePath  String?
+  createdAt DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+model ProjectLegacy {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+  srsDocuments   SrsDocument[]
+  repositories   GitRepository[]
+  scanRuns       ScanRun[]
+}
+
+model SrsDocument {
+  id          String          @id @default(uuid())
+  projectId   String
+  fileName    String
+  fileUrl     String
+  status      DocumentStatus  @default(PENDING)
+  rawText     String?
+  createdAt   DateTime        @default(now())
+
+  project     ProjectLegacy   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requirements SrsRequirement[]
+  useCases    SrsUseCase[]
+  classes     SrsClass[]
+  scanRuns    ScanRun[]
+}
+
+enum DocumentStatus {
+  PENDING
+  PARSING
+  PARSED
+  FAILED
+}
+
+model GitRepository {
+  id            String      @id @default(uuid())
+  projectId     String
+  repoUrl       String
+  defaultBranch String      @default("main")
+  accessToken   String?
+  createdAt     DateTime    @default(now())
+
+  project       ProjectLegacy @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scanRuns      ScanRun[]
+}
+
+model ScanRun {
+  id            String      @id @default(uuid())
+  projectId     String
+  srsDocumentId String
+  repositoryId  String
+  commitHash    String
+  status        ScanStatus  @default(QUEUED)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime    @default(now())
+
+  project       ProjectLegacy @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  srsDocument   SrsDocument @relation(fields: [srsDocumentId], references: [id])
+  repository    GitRepository @relation(fields: [repositoryId], references: [id])
+  codeClasses   CodeClass[]
+  mismatches    Mismatch[]
+}
+
+enum ScanStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// ==========================================
+// 2. PARSED SRS SPECIFICATIONS (EXPECTED)
+// ==========================================
+model SrsRequirement {
+  id            String          @id @default(uuid())
+  srsDocumentId String
+  identifier    String
+  type          RequirementType  @default(FUNCTIONAL)
+  title         String
+  description   String
+
+  srsDocument   SrsDocument     @relation(fields: [srsDocumentId], references: [id], onDelete: Cascade)
+}
+
+enum RequirementType {
+  FUNCTIONAL
+  NON_FUNCTIONAL
+  BUSINESS_RULE
+}
+
+model SrsUseCase {
+  id             String      @id @default(uuid())
+  srsDocumentId  String
+  identifier     String
+  name           String
+  actors         String[]
+  preConditions  String?
+  postConditions String?
+  flowOfEvents   Json?
+
+  srsDocument    SrsDocument @relation(fields: [srsDocumentId], references: [id], onDelete: Cascade)
+}
+
+model SrsClass {
+  id                 String            @id @default(uuid())
+  srsDocumentId      String
+  name               String
+  stereotype         ClassStereotype   @default(OTHER)
+  description        String?
+
+  srsDocument        SrsDocument       @relation(fields: [srsDocumentId], references: [id], onDelete: Cascade)
+  fields             SrsField[]
+  methods            SrsMethod[]
+  outgoingRelations  SrsRelationship[] @relation("SourceClass")
+  incomingRelations  SrsRelationship[] @relation("TargetClass")
+  mismatches         Mismatch[]
+
+  @@unique([srsDocumentId, name])
+}
+
+enum ClassStereotype {
+  ENTITY
+  BOUNDARY
+  CONTROL
+  OTHER
+}
+
+model SrsField {
+  id          String      @id @default(uuid())
+  srsClassId  String
+  name        String
+  dataType    String
+  visibility  Visibility  @default(PRIVATE)
+
+  srsClass    SrsClass    @relation(fields: [srsClassId], references: [id], onDelete: Cascade)
+
+  @@unique([srsClassId, name])
+}
+
+model SrsMethod {
+  id          String      @id @default(uuid())
+  srsClassId  String
+  name        String
+  returnType  String      @default("void")
+  parameters  Json?
+  visibility  Visibility  @default(PUBLIC)
+
+  srsClass    SrsClass    @relation(fields: [srsClassId], references: [id], onDelete: Cascade)
+
+  @@unique([srsClassId, name])
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  PROTECTED
+  PACKAGE
+}
+
+model SrsRelationship {
+  id             String          @id @default(uuid())
+  sourceClassId  String
+  targetClassId  String
+  type           RelationshipType
+  multiplicity   String?
+
+  sourceClass    SrsClass        @relation("SourceClass", fields: [sourceClassId], references: [id], onDelete: Cascade)
+  targetClass    SrsClass        @relation("TargetClass", fields: [targetClassId], references: [id], onDelete: Cascade)
+}
+
+enum RelationshipType {
+  INHERITANCE
+  ASSOCIATION
+  AGGREGATION
+  COMPOSITION
+  DEPENDENCY
+}
+
+// ==========================================
+// 3. PARSED CODE ENTITIES (ACTUAL GIT CODE)
+// ==========================================
+model CodeClass {
+  id          String      @id @default(uuid())
+  scanRunId   String
+  name        String
+  filePath    String
+  packageName String?
+
+  scanRun     ScanRun     @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  fields      CodeField[]
+  methods     CodeMethod[]
+  mismatches  Mismatch[]
+
+  @@unique([scanRunId, filePath, name])
+}
+
+model CodeField {
+  id          String      @id @default(uuid())
+  codeClassId String
+  name        String
+  dataType    String?
+  visibility  Visibility  @default(PUBLIC)
+
+  codeClass   CodeClass   @relation(fields: [codeClassId], references: [id], onDelete: Cascade)
+}
+
+model CodeMethod {
+  id          String      @id @default(uuid())
+  codeClassId String
+  name        String
+  returnType  String?
+  parameters  Json?
+  visibility  Visibility  @default(PUBLIC)
+
+  codeClass   CodeClass   @relation(fields: [codeClassId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// 4. MISMATCH & REPORTING ENGINE
+// ==========================================
+model Mismatch {
+  id          String          @id @default(uuid())
+  scanRunId   String
+  category    MismatchCategory
+  severity    Severity        @default(WARNING)
   title       String
-  content     String
-  generatedAt DateTime @default(now())
+  description String
+  isResolved  Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  srsClassId  String?
+  codeClassId String?
 
-  room        Room     @relation(fields:[roomId], references:[id])
+  scanRun     ScanRun         @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  srsClass    SrsClass?       @relation(fields: [srsClassId], references: [id], onDelete: SetNull)
+  codeClass   CodeClass?      @relation(fields: [codeClassId], references: [id], onDelete: SetNull)
 }
+
+enum MismatchCategory {
+  MISSING_CLASS
+  MISSING_FIELD
+  TYPE_MISMATCH
+  MISSING_METHOD
+  VISIBILITY_MISMATCH
+  MISSING_RELATIONSHIP
+  UNIMPLEMENTED_REQUIREMENT
+}
+
+enum Severity {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+

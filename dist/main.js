@@ -34,13 +34,13 @@ async function bootstrap() {
         credentials: true,
     });
     const config = new DocumentBuilder()
-        .setTitle('CollabFlow API')
-        .setDescription('Collaborative software-engineering platform for final-year CS/SW student teams. It supports project creation, member onboarding, problem discovery, advisor review, requirements planning, sprint execution, task tracking, project history, and documentation generation.')
+        .setTitle('SpecFlow API')
+        .setDescription('Specification-first engineering platform for writing product docs, importing existing requirements, connecting a Git repository, checking implementation against the specification, and sharing the project for review.')
         .setVersion('1.0')
         .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document, {
-        customSiteTitle: 'CollabFlow Project Docs',
+        customSiteTitle: 'SpecFlow Project Docs',
         swaggerOptions: {
             persistAuthorization: true,
         },
