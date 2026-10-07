@@ -1,6 +1,17 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProjectsService, type CreateProjectInput, type SubmitIdeaInput } from './projects.service.js';
+
+class UploadSrsDocumentDto {
+  @ApiProperty({ enum: ['pdf', 'docx', 'markdown'], required: false, default: 'markdown' })
+  format?: 'pdf' | 'docx' | 'markdown';
+
+  @ApiProperty({ example: 'requirements.md' })
+  fileName!: string;
+
+  @ApiProperty({ example: 'FR-01: User can create a workspace.' })
+  content!: string;
+}
 
 @ApiTags('projects')
 @Controller('projects')
@@ -33,12 +44,19 @@ export class ProjectsController {
     return this.projectsService.createProject(dto);
   }
 
-  @Post(':id/import')
-  @ApiOperation({ summary: 'Import an existing specification into the project.' })
+  @Post(':id/srs')
+  @ApiOperation({ summary: 'Upload an SRS document, extract the key requirements and classes, and attach the extracted specification to the project.' })
   @ApiParam({ name: 'id', description: 'Project ID' })
-  @ApiResponse({ status: 200, description: 'Specification imported successfully.' })
-  importSpecification(@Param('id') id: string, @Body() dto: Record<string, any>) {
-    return this.projectsService.importSpecification(id, dto);
+  @ApiResponse({ status: 200, description: 'SRS document ingested and extracted successfully.' })
+  ingestSrsDocument(
+    @Param('id') id: string,
+    @Body() dto: UploadSrsDocumentDto
+  ) {
+    return this.projectsService.ingestSrsDocument(id, {
+      format: dto.format ?? 'markdown',
+      fileName: dto.fileName ?? 'uploaded-srs-document.md',
+      content: dto.content ?? '',
+    });
   }
 
   @Post(':id/repository')
@@ -57,14 +75,6 @@ export class ProjectsController {
     return this.projectsService.checkImplementationAgainstSpec(id, dto.files ?? [], dto.context ?? '');
   }
 
-  @Post(':id/review')
-  @ApiOperation({ summary: 'Create a shareable review link for stakeholders to inspect the project specification.' })
-  @ApiParam({ name: 'id', description: 'Project ID' })
-  @ApiResponse({ status: 200, description: 'Review link generated.' })
-  shareProjectForReview(@Param('id') id: string, @Body('reviewer') reviewer: string) {
-    return this.projectsService.shareProjectForReview(id, { reviewer: reviewer ?? 'Product team' });
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Fetch a project by ID and inspect its specification, repo connection, and review status.' })
   @ApiParam({ name: 'id', description: 'Project ID' })
@@ -73,47 +83,4 @@ export class ProjectsController {
     return this.projectsService.getProject(id);
   }
 
-  @Post(':id/ideas')
-  @ApiOperation({ summary: 'Submit a specification idea or backlog concept for review.' })
-  @ApiParam({ name: 'id', description: 'Project ID' })
-  @ApiResponse({ status: 201, description: 'Idea submitted successfully.' })
-  @ApiBody({
-    schema: {
-      example: {
-        problem: 'Teams lose alignment when specifications drift from implementation.',
-        solution: 'A repo-aware specification checker that points to missing architecture decisions.',
-        stakeholders: ['Engineering', 'Product', 'Architecture'],
-        targetUsers: ['Software teams', 'Engineering leads'],
-        submittedBy: 'Alem',
-      },
-    },
-  })
-  submitIdea(@Param('id') id: string, @Body() dto: SubmitIdeaInput) {
-    return this.projectsService.submitIdea(id, dto);
-  }
-
-  @Post(':id/ideas/:ideaId/vote')
-  @ApiOperation({ summary: 'Vote for an alternative specification direction.' })
-  @ApiParam({ name: 'id', description: 'Project ID' })
-  @ApiParam({ name: 'ideaId', description: 'Idea ID' })
-  @ApiResponse({ status: 200, description: 'Vote submitted successfully.' })
-  voteOnIdea(@Param('id') id: string, @Param('ideaId') ideaId: string, @Body('voter') voter: string) {
-    return this.projectsService.voteOnIdea(id, ideaId, voter);
-  }
-
-  @Post(':id/approve')
-  @ApiOperation({ summary: 'Approve the project specification and mark it ready for implementation review.' })
-  @ApiParam({ name: 'id', description: 'Project ID' })
-  @ApiResponse({ status: 200, description: 'Project approved successfully.' })
-  approveProject(@Param('id') id: string, @Body('advisorName') advisorName: string) {
-    return this.projectsService.approveProject(id, advisorName);
-  }
-
-  @Get(':id/documentation')
-  @ApiOperation({ summary: 'Generate a structured specification draft from the project description and written requirements.' })
-  @ApiParam({ name: 'id', description: 'Project ID' })
-  @ApiResponse({ status: 200, description: 'Project documentation draft returned successfully.' })
-  generateDocumentation(@Param('id') id: string) {
-    return this.projectsService.generateDocumentation(id);
-  }
 }

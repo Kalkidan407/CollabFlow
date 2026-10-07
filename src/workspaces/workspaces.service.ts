@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 
-export type WorkspaceStatus = 'DRAFT' | 'APPROVED' | 'MISMATCH_FOUND';
-
 export interface SpecificationDraft {
   overview: string;
   goals: string[];
@@ -20,15 +18,62 @@ export interface RepositorySyncInfo {
   lastSyncedAt?: string;
 }
 
+export interface SrsFieldDefinition {
+  name: string;
+  type: string;
+  visibility?: 'public' | 'private' | 'protected';
+  defaultValue?: string;
+}
+
+export interface SrsMethodDefinition {
+  name: string;
+  returnType?: string;
+  parameters?: string[];
+  visibility?: 'public' | 'private' | 'protected';
+}
+
+export interface SrsClassDefinition {
+  name: string;
+  stereotype?: 'Entity' | 'Boundary' | 'Control';
+  fields: SrsFieldDefinition[];
+  methods: SrsMethodDefinition[];
+  relationships?: string[];
+}
+
+export interface SrsUseCaseDefinition {
+  title: string;
+  actors?: string[];
+  preconditions?: string[];
+  postconditions?: string[];
+  mainFlow?: string[];
+}
+
+export interface SrsRequirementDefinition {
+  id: string;
+  description: string;
+  constraints?: string[];
+}
+
+export interface ExtractedSrsEntities {
+  requirements: SrsRequirementDefinition[];
+  useCases: SrsUseCaseDefinition[];
+  classes: SrsClassDefinition[];
+}
+
+export type WorkspaceSpecificationDraft = SpecificationDraft & {
+  importedFrom?: string;
+  extracted?: ExtractedSrsEntities;
+};
+
 export interface ProjectWorkspaceRecord {
   id: string;
   title: string;
   description?: string;
-  status: WorkspaceStatus;
   source?: 'draft' | 'imported';
   repository?: RepositorySyncInfo | null;
-  specification?: (SpecificationDraft & { importedFrom?: string }) | null;
+  specification?: WorkspaceSpecificationDraft | null;
   reviewStatus?: 'READY_FOR_REVIEW' | 'IN_REVIEW' | 'APPROVED';
+  reviewer?: string;
   shareUrl?: string;
   projects: string[];
   createdAt: string;
@@ -46,6 +91,18 @@ export interface CreateProjectWorkspaceInput {
   architecture?: string;
   acceptanceCriteria?: string[];
   source?: 'draft' | 'imported';
+}
+
+export interface IngestSrsDocumentInput {
+  format: 'pdf' | 'docx' | 'markdown';
+  fileName: string;
+  content: string;
+}
+
+export interface ReviewExtractedEntitiesInput {
+  requirements?: SrsRequirementDefinition[];
+  useCases?: SrsUseCaseDefinition[];
+  classes?: SrsClassDefinition[];
 }
 
 @Injectable()
@@ -76,7 +133,6 @@ export class WorkspacesService {
       id,
       title: data.title,
       description: data.description ?? 'Specification-first workspace for architecture and implementation review.',
-      status: 'DRAFT',
       source: data.source ?? 'draft',
       repository: data.repositoryUrl
         ? {
@@ -89,11 +145,62 @@ export class WorkspacesService {
         : null,
       specification,
       reviewStatus: 'READY_FOR_REVIEW',
+      reviewer: 'Product team',
       shareUrl: `https://specflow.example/reviews/${id}`,
       projects: [],
       createdAt: now,
       updatedAt: now,
     };
+
+    // Persist to the contract-backed DB and keep an in-memory cache
+    try {
+      const client = this.prisma.getClient();
+      const plan = client.raw.sql`
+        INSERT INTO "public"."Workspace" ("id","title","description","status","source","repositoryUrl","defaultBranch","reviewStatus","shareUrl")
+        VALUES (${id}, ${data.title}, ${data.description ?? ''}, ${'DRAFT'}, ${data.source ?? 'draft'}, ${data.repositoryUrl ?? ''}, ${data.defaultBranch ?? ''}, ${workspace.reviewStatus}, ${workspace.shareUrl})
+        RETURNING "id","title","description","status","source","repositoryUrl","defaultBranch","reviewStatus","shareUrl","createdAt","updatedAt"
+      `.returnsRow({
+        id: 'pg/text@1',
+        title: 'pg/text@1',
+        description: 'pg/text@1',
+        status: 'pg/text@1',
+        source: 'pg/text@1',
+        repositoryUrl: 'pg/text@1',
+        defaultBranch: 'pg/text@1',
+        reviewStatus: 'pg/text@1',
+        shareUrl: 'pg/text@1',
+        createdAt: 'pg/timestamptz-temporal@1',
+        updatedAt: 'pg/timestamptz-temporal@1',
+      }).build();
+
+      const rows = await client.runtime().query(plan);
+      const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+
+      if (row) {
+        const persisted: ProjectWorkspaceRecord = {
+          id: String(row.id),
+          title: String(row.title),
+          description: row.description ?? undefined,
+          source: (row.source ?? workspace.source) as 'draft' | 'imported',
+          repository: workspace.repository,
+          specification: workspace.specification,
+          reviewStatus: row.reviewStatus ?? workspace.reviewStatus,
+          reviewer: workspace.reviewer,
+          shareUrl: row.shareUrl ?? workspace.shareUrl,
+          projects: [],
+          createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+          updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+        };
+
+        this.workspaces.set(id, persisted);
+        return persisted;
+      }
+    } catch (err: unknown) {
+      // Fall back to in-memory storage if DB write fails
+      // Use safe cast because `err` is `unknown` in strict TS configs
+      // eslint-disable-next-line no-console
+      console.error('Workspace persistence error, keeping in-memory:', (err as any)?.message ?? err);
+    }
 
     this.workspaces.set(id, workspace);
     return workspace;
@@ -107,7 +214,7 @@ export class WorkspacesService {
       workspaceId,
       title: input.title,
       description: input.description ?? 'Project created inside the workspace.',
-      status: 'DRAFT' as WorkspaceStatus,
+      status: 'DRAFT',
       source: input.source ?? 'draft',
       repository: input.repositoryUrl
         ? {
@@ -140,7 +247,62 @@ export class WorkspacesService {
     return { workspaceId, project };
   }
 
-  async importSpecification(workspaceId: string, specification: Partial<SpecificationDraft>) {
+  async ingestSrsDocument(workspaceId: string, input: IngestSrsDocumentInput) {
+    const workspace = await this.getWorkspace(workspaceId);
+    const extracted = this.extractSrsEntities(input.content);
+
+    workspace.source = 'imported';
+    workspace.specification = {
+      ...(workspace.specification ?? {
+        overview: 'Imported specification from an SRS document.',
+        goals: ['Capture the product intent described by the SRS'],
+        requirements: extracted.requirements.map((item) => item.description),
+        acceptanceCriteria: ['The document was reviewed and validated before scanning'],
+      }),
+      importedFrom: input.fileName,
+      extracted,
+    };
+
+    workspace.reviewStatus = 'READY_FOR_REVIEW';
+    workspace.updatedAt = new Date().toISOString();
+
+    return {
+      workspaceId,
+      fileName: input.fileName,
+      format: input.format,
+      uploadedAt: new Date().toISOString(),
+      extracted,
+      reviewStatus: workspace.reviewStatus,
+    };
+  }
+
+  async reviewExtractedEntities(workspaceId: string, input: ReviewExtractedEntitiesInput) {
+    const workspace = await this.getWorkspace(workspaceId);
+    const current = workspace.specification?.extracted ?? this.extractSrsEntities('');
+
+    const next = {
+      requirements: input.requirements ?? current.requirements,
+      useCases: input.useCases ?? current.useCases,
+      classes: input.classes ?? current.classes,
+    };
+
+    workspace.specification = {
+      ...(workspace.specification ?? {
+        overview: 'Reviewed specification',
+        goals: ['Confirm the extracted SRS entities'],
+        requirements: next.requirements.map((item) => item.description),
+        acceptanceCriteria: ['The extracted requirements and classes were reviewed'],
+      }),
+      extracted: next,
+    };
+
+    workspace.reviewStatus = 'IN_REVIEW';
+    workspace.updatedAt = new Date().toISOString();
+
+    return next;
+  }
+
+  async importSpecification(workspaceId: string, specification: Partial<SpecificationDraft> & { importedFrom?: string }) {
     const workspace = await this.getWorkspace(workspaceId);
     workspace.specification = {
       overview: specification.overview ?? workspace.specification?.overview ?? 'Imported specification',
@@ -153,7 +315,6 @@ export class WorkspacesService {
     };
 
     workspace.source = 'imported';
-    workspace.status = 'READY_FOR_REVIEW';
     return workspace;
   }
 
@@ -196,8 +357,6 @@ export class WorkspacesService {
       });
     }
 
-    workspace.status = mismatches.length > 0 ? 'MISMATCH_FOUND' : 'READY_FOR_REVIEW';
-
     return {
       workspaceId,
       summary: `Specification review completed for ${workspace.title}. ${mismatches.length} mismatch(es) identified.`,
@@ -209,26 +368,140 @@ export class WorkspacesService {
   async shareProjectForReview(workspaceId: string, reviewer: string) {
     const workspace = await this.getWorkspace(workspaceId);
     const shareUrl = `https://specflow.example/reviews/${workspace.id}`;
+    const assignedReviewer = reviewer || 'Product team';
 
-    workspace.reviewStatus = 'READY_FOR_REVIEW';
+    workspace.reviewer = assignedReviewer;
+    workspace.reviewStatus = 'IN_REVIEW';
     workspace.shareUrl = shareUrl;
-    workspace.status = 'READY_FOR_REVIEW';
 
     return {
       workspaceId,
-      reviewer,
-      reviewStatus: 'READY_FOR_REVIEW',
+      reviewer: assignedReviewer,
+      reviewStatus: 'IN_REVIEW',
       shareUrl,
       sharedAt: new Date().toISOString(),
     };
   }
 
+  private extractSrsEntities(content: string): ExtractedSrsEntities {
+    const normalized = content.replace(/\r/g, '');
+    const lines = normalized.split('\n').map((line) => line.trim()).filter(Boolean);
+
+    const requirements = lines
+      .flatMap((line) => {
+        const match = line.match(/(?:^|\s)([A-Z]+-\d+)\s*[:\-]\s*(.+)$/i);
+        return match ? [{ id: match[1].toUpperCase(), description: match[2].trim(), constraints: [] }] : [];
+      })
+      .slice(0, 10);
+
+    const useCases = lines
+      .flatMap((line) => {
+        const match = line.match(/(?:use case|Use Case)\s*[:\-]?\s*(.+)$/i);
+        return match ? [{ title: match[1].trim(), mainFlow: [match[1].trim()] }] : [];
+      })
+      .slice(0, 10);
+
+    const classes: SrsClassDefinition[] = lines
+      .flatMap((line): SrsClassDefinition[] => {
+        const classMatch = line.match(/(?:class|Class)\s*[:\-]?\s*([A-Z][A-Za-z0-9_]*)\s*(?:\{([^}]*)\})?/);
+        if (!classMatch) {
+          return [];
+        }
+
+        const name = classMatch[1];
+        const body = classMatch[2] ?? '';
+        const fields: SrsFieldDefinition[] = [...body.matchAll(/([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([A-Za-z0-9_<>,\[\]\?]+)(?:\s*=\s*([^;]+))?/g)].map((match): SrsFieldDefinition => ({
+          name: match[1],
+          type: match[2].trim(),
+          visibility: 'private',
+          defaultValue: match[3]?.trim(),
+        }));
+
+        const methods: SrsMethodDefinition[] = [...body.matchAll(/([A-Za-z_][A-Za-z0-9_]*)\s*\(([^)]*)\)\s*(?::\s*([A-Za-z0-9_<>,\[\]\?]+))?/g)].map((match): SrsMethodDefinition => ({
+          name: match[1],
+          parameters: match[2].trim() ? match[2].split(',').map((part) => part.trim()).filter(Boolean) : [],
+          returnType: match[3]?.trim() || 'void',
+          visibility: 'public',
+        }));
+
+        return [{
+          name,
+          stereotype: 'Entity' as const,
+          fields,
+          methods,
+          relationships: line.includes('extends') ? ['extends'] : [],
+        }];
+      })
+      .slice(0, 10);
+
+    const fallbackClass: SrsClassDefinition = {
+      name: 'DomainEntity',
+      stereotype: 'Entity',
+      fields: [],
+      methods: [],
+      relationships: [],
+    };
+
+    return {
+      requirements:
+        requirements.length > 0
+          ? requirements
+          : [{ id: 'FR-01', description: 'Primary requirement extracted from the SRS document.', constraints: [] }],
+      useCases: useCases.length > 0 ? useCases : [{ title: 'Primary use case identified from the SRS document.' }],
+      classes: classes.length > 0 ? classes : [fallbackClass],
+    };
+  }
+
   async getWorkspace(workspaceId: string): Promise<ProjectWorkspaceRecord> {
-    const workspace = this.workspaces.get(workspaceId);
-    if (!workspace) {
+    const cached = this.workspaces.get(workspaceId);
+    if (cached) return cached;
+
+    // Try to load from DB when not cached
+    try {
+      const client = this.prisma.getClient();
+      const plan = client.raw.sql`
+        SELECT "id","title","description","status","source","repositoryUrl","defaultBranch","reviewStatus","shareUrl","createdAt","updatedAt"
+        FROM "public"."Workspace" WHERE "id" = ${workspaceId}
+      `.returnsRow({
+        id: 'pg/text@1',
+        title: 'pg/text@1',
+        description: 'pg/text@1',
+        status: 'pg/text@1',
+        source: 'pg/text@1',
+        repositoryUrl: 'pg/text@1',
+        defaultBranch: 'pg/text@1',
+        reviewStatus: 'pg/text@1',
+        shareUrl: 'pg/text@1',
+        createdAt: 'pg/timestamptz-temporal@1',
+        updatedAt: 'pg/timestamptz-temporal@1',
+      }).build();
+
+      const rows = await client.runtime().query(plan);
+      const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+      if (!row) throw new NotFoundException(`Workspace ${workspaceId} was not found.`);
+
+      const loaded: ProjectWorkspaceRecord = {
+        id: String(row.id),
+        title: String(row.title),
+        description: row.description ?? undefined,
+        source: (row.source ?? 'draft') as 'draft' | 'imported',
+        repository: undefined,
+        specification: null,
+        reviewStatus: row.reviewStatus ?? undefined,
+        reviewer: undefined,
+        shareUrl: row.shareUrl ?? undefined,
+        projects: [],
+        createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+        updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+      };
+
+      this.workspaces.set(workspaceId, loaded);
+      return loaded;
+    } catch (err) {
+      // If DB access fails, preserve existing behavior
       throw new NotFoundException(`Workspace ${workspaceId} was not found.`);
     }
-    return workspace;
   }
+  
 }
 

@@ -1,7 +1,34 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { WorkspacesService, type ProjectWorkspaceRecord } from './workspaces.service.js';
+import { ApiBody, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  WorkspacesService,
+  type IngestSrsDocumentInput,
+  type ProjectWorkspaceRecord,
+  type ReviewExtractedEntitiesInput,
+} from './workspaces.service.js';
 import type { CreateProjectInput } from '../projects/projects.service.js';
+
+class WorkspaceSrsUploadDto {
+  @ApiProperty({ enum: ['pdf', 'docx', 'markdown'], required: false, default: 'markdown' })
+  format?: 'pdf' | 'docx' | 'markdown';
+
+  @ApiProperty({ example: 'requirements.md' })
+  fileName!: string;
+
+  @ApiProperty({ example: 'FR-01: User can create a workspace.' })
+  content!: string;
+}
+
+class WorkspaceSrsReviewDto {
+  @ApiProperty({ type: [Object], required: false })
+  requirements?: Array<{ id: string; description: string; constraints?: string[] }>;
+
+  @ApiProperty({ type: [Object], required: false })
+  useCases?: Array<{ title: string; actors?: string[]; preconditions?: string[]; postconditions?: string[]; mainFlow?: string[] }>;
+
+  @ApiProperty({ type: [Object], required: false })
+  classes?: Array<{ name: string; stereotype?: 'Entity' | 'Boundary' | 'Control'; fields: Array<{ name: string; type: string; visibility?: 'public' | 'private' | 'protected'; defaultValue?: string }>; methods: Array<{ name: string; returnType?: string; parameters?: string[]; visibility?: 'public' | 'private' | 'protected' }>; relationships?: string[] }>;
+}
 
 @ApiTags('workspaces')
 @Controller('workspaces')
@@ -16,7 +43,7 @@ export class WorkspacesController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new project workspace for a specification-first workflow' })
+  @ApiOperation({ summary: 'Create a new workspace for a specification-first workflow' })
   @ApiResponse({ status: 201, description: 'Workspace created successfully.' })
   @ApiBody({
     schema: {
@@ -51,6 +78,30 @@ export class WorkspacesController {
   @ApiResponse({ status: 201, description: 'Project created inside the workspace.' })
   async createProjectInWorkspace(@Param('id') id: string, @Body() body: CreateProjectInput) {
     return this.workspacesService.createProjectInWorkspace(id, body);
+  }
+
+  @Post(':id/srs-ingest')
+  @ApiOperation({ summary: 'Upload and parse an SRS document to extract requirements, use cases, and domain classes' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiResponse({ status: 200, description: 'SRS document ingested and analyzed successfully.' })
+  async ingestSrsDocument(@Param('id') id: string, @Body() body: WorkspaceSrsUploadDto) {
+    return this.workspacesService.ingestSrsDocument(id, {
+      format: body.format ?? 'markdown',
+      fileName: body.fileName ?? 'uploaded-srs-document.md',
+      content: body.content ?? '',
+    } satisfies IngestSrsDocumentInput);
+  }
+
+  @Post(':id/srs-review')
+  @ApiOperation({ summary: 'Review and override the SRS entities extracted from the uploaded document' })
+  @ApiParam({ name: 'id', description: 'Workspace ID' })
+  @ApiResponse({ status: 200, description: 'Extracted SRS entities updated successfully.' })
+  async reviewExtractedEntities(@Param('id') id: string, @Body() body: WorkspaceSrsReviewDto) {
+    return this.workspacesService.reviewExtractedEntities(id, {
+      requirements: body.requirements,
+      useCases: body.useCases,
+      classes: body.classes,
+    } satisfies ReviewExtractedEntitiesInput);
   }
 
   @Post(':id/specification')
