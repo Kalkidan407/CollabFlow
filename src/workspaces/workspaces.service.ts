@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { createSecureId } from '../common/secure-id';
 
 export interface SpecificationDraft {
   overview: string;
@@ -44,7 +45,7 @@ export interface SrsUseCaseDefinition {
   title: string;
   actors?: string[];
   preconditions?: string[];
-  postconditions?: string[];
+  postConditions?: string[];
   mainFlow?: string[];
 }
 
@@ -116,7 +117,7 @@ export class WorkspacesService {
   }
 
   async createProjectWorkspace(data: CreateProjectWorkspaceInput): Promise<ProjectWorkspaceRecord> {
-    const id = `workspace-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    const id = createSecureId('workspace');
     const now = new Date().toISOString();
 
     const specification: SpecificationDraft & { importedFrom?: string } = {
@@ -210,7 +211,7 @@ export class WorkspacesService {
     const workspace = await this.getWorkspace(workspaceId);
 
     const project = {
-      id: `project-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      id: createSecureId('project'),
       workspaceId,
       title: input.title,
       description: input.description ?? 'Project created inside the workspace.',

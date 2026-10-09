@@ -23,7 +23,7 @@ describe('ProjectsService', () => {
     });
 
     expect(project.title).toBe('SpecGuard');
-    expect(project.repository.url).toBe('https://github.com/acme/specguard');
+    expect(project.repository?.url).toBe('https://github.com/acme/specguard');
     expect(project.specification.requirements).toHaveLength(2);
     expect(project.status).toBe('DRAFT');
   });

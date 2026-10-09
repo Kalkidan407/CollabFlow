@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ProjectsService, type CreateProjectInput, type SubmitIdeaInput } from './projects.service.js';
+import { ProjectsService, type CreateProjectInput } from './projects.service.js';
 
 class UploadSrsDocumentDto {
   @ApiProperty({ enum: ['pdf', 'docx', 'markdown'], required: false, default: 'markdown' })

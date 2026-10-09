@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { createSecureId } from '../common/secure-id.js';
 
 export type ProjectStatus =
   | 'DRAFT'
@@ -102,7 +104,7 @@ export class ProjectsService {
   private projects = new Map<string, any>();
 
   createProject(input: CreateProjectInput) {
-    const id = `project-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    const id = createSecureId('project');
     const specification = this.normalizeSpecification(input.specification);
     const repository = input.repositoryUrl
       ? {
@@ -116,7 +118,7 @@ export class ProjectsService {
 
     const project = {
       id,
-      shareCode: `proj-${Math.random().toString(36).slice(2, 10)}`,
+      shareCode: `proj-${randomUUID().slice(0, 12)}`,
       workspaceId: input.workspaceId ?? null,
       title: input.title,
       description: input.description ?? 'Specification-first project for architecture review and implementation validation.',
@@ -127,7 +129,7 @@ export class ProjectsService {
       specification,
       docs: [
         {
-          id: `doc-${Date.now()}`,
+          id: createSecureId('doc'),
           title: `${input.title} — specification`,
           type: 'SPECIFICATION',
           source: input.source ?? 'draft',
@@ -150,8 +152,8 @@ export class ProjectsService {
       academicYear: input.academicYear ?? 'TBD',
       goal: input.goal ?? specification.overview,
       preferredStack: (input.preferredStack ?? ['TypeScript', 'NestJS', 'GitHub']).filter(Boolean),
-      teamMembers: (input.teamMembers ?? []).map((member, index) => ({
-        id: `member-${index + 1}`,
+      teamMembers: (input.teamMembers ?? []).map((member) => ({
+        id: createSecureId('member'),
         name: member,
         role: 'Contributor',
       })),

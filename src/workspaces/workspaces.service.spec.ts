@@ -49,4 +49,13 @@ describe('WorkspacesService', () => {
     expect(updated.classes[0].name).toBe('Account');
     expect(updated.classes[0].fields[0].name).toBe('email');
   });
+
+  it('creates secure workspace ids using uuid format', async () => {
+    const service = new WorkspacesService({ getClient: () => ({}) } as any);
+    const workspace = await service.createProjectWorkspace({
+      title: 'Secure Workspace',
+    });
+
+    expect(workspace.id).toMatch(/^workspace-[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  });
 });
